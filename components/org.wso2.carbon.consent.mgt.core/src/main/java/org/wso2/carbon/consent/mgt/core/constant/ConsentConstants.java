@@ -37,14 +37,22 @@ public class ConsentConstants {
     public static final String PURPOSE_CATEGORY_RESOURCE_PATH = CONSENT_RESOURCE_PATH + "/" + "purpose-categories";
     public static final String PII_CATEGORY_RESOURCE_PATH = CONSENT_RESOURCE_PATH + "/" + "pii-categories";
     public static final String API_VERSION = "KI-CR-v1.1.0";
+    public static final String DEFAULT_PURPOSE_GROUP = "DEFAULT";
     public static final String REVOKE_STATE = "REVOKED";
     public static final String ACTIVE_STATE = "ACTIVE";
+    public static final String PENDING_STATE = "PENDING";
+    public static final String REJECTED_STATE = "REJECTED";
+    public static final String APPROVED_STATE = "APPROVED";
+    public static final String EXPIRED_STATE = "EXPIRED";
+    public static final Integer DEFAULT_LIMIT = 10;
+    public static final Integer DEFAULT_OFFSET = 0;
 
     public static final String PURPOSE = "PURPOSE";
     public static final String PURPOSE_CATEGORY = "PURPOSE_CATEGORY";
     public static final String PII_CATEGORY = "PII_CATEGORY";
     public static final String RECEIPT_ID = "RECEIPT_ID";
     public static final String PURPOSE_ID = "PURPOSE_ID";
+    public static final String VERSION_ID = "VERSION_ID";
     public static final String TENANT_ID = "TENANT_ID";
     public static final String PURPOSE_CATEGORY_ID = "PURPOSE_CATEGORY_ID";
     public static final String PII_CATEGORY_ID = "PII_CATEGORY_ID";
@@ -219,7 +227,32 @@ public class ConsentConstants {
         ERROR_CODE_DELETE_RECEIPTS_BY_PRINCIPAL_TENANT_ID("CM_00095", "Error occurred while deleting " +
                 "receipt from DB for the tenant: %s."),
         ERROR_CODE_DELETE_SP_ASSOC_BY_SP_TENANT_ID("CM_00096", "Error occurred while deleting " +
-                "SP Association for the SP tenant: %s.");
+                "SP Association for the SP tenant: %s."),
+        ERROR_CODE_PURPOSE_VERSION_ALREADY_EXISTS("CM_00097", "Purpose version already exists: %s"),
+        ERROR_CODE_PURPOSE_VERSION_ID_INVALID("CM_00098", "Purpose version not found for ID: %s"),
+        ERROR_CODE_ADD_PURPOSE_VERSION("CM_00099", "Error adding purpose version"),
+        ERROR_CODE_GET_PURPOSE_VERSION_LIST("CM_00100", "Error listing purpose versions for purpose ID: %s"),
+        ERROR_CODE_GET_PURPOSE_VERSION("CM_00101", "Error retrieving purpose version for ID: %s"),
+        ERROR_CODE_DELETE_PURPOSE_VERSION("CM_00102", "Error deleting purpose version for ID: %s"),
+        ERROR_CODE_PURPOSE_VERSION_NOT_FOUND("CM_00103", "Purpose version not found for ID: %s"),
+        ERROR_CODE_PURPOSE_VERSION_MISMATCH("CM_00104", "Purpose version ID: %s does not belong to purpose ID: %s"),
+        ERROR_CODE_PURPOSE_VERSION_REQUIRED("CM_00105", "Purpose version label is required"),
+        ERROR_CODE_PURPOSE_VERSION_LABEL_ALREADY_EXISTS("CM_00106", "Version '%s' already exists for this purpose"),
+        ERROR_CODE_PURPOSE_UUID_NOT_FOUND("CM_00107", "Purpose with UUID '%s' not found"),
+        ERROR_CODE_ELEMENT_UUID_NOT_FOUND("CM_00108", "Element with UUID '%s' not found"),
+        ERROR_CODE_PURPOSE_VERSION_LABEL_NOT_FOUND("CM_00109", "Purpose version '%s' not found for purpose ID: %s"),
+        ERROR_CODE_PURPOSE_CATEGORY_NOT_FOUND("CM_00110", "Purpose category not found: %s"),
+        ERROR_CODE_CONSENT_INVALID_STATE_FOR_REVOKE("CM_00111",
+                "Cannot revoke consent: only ACTIVE consents may be revoked. Consent '%s' is not in ACTIVE state."),
+        ERROR_CODE_CONSENT_INVALID_STATE_FOR_AUTHORIZE("CM_00112",
+                "Cannot authorize consent: only PENDING consents may be authorized. Consent '%s' is not in PENDING state."),
+        ERROR_CODE_CANNOT_DELETE_LATEST_PURPOSE_VERSION("CM_00113",
+                "Cannot delete purpose version '%s': it is currently set as the latest version. " +
+                "Promote a different version before deleting this one."),
+        ERROR_CODE_CONSENT_USER_NOT_IN_AUTHORIZATION_LIST("CM_00114",
+                "User '%s' is not in the authorization list for this consent."),
+        ERROR_CODE_CONSENT_SUBJECT_MISMATCH("CM_00115",
+                "Subject ID '%s' does not match the authenticated user for a consent without authorizations.");
 
         private final String code;
         private final String message;
@@ -343,5 +376,14 @@ public class ConsentConstants {
         public static final String POST_DELETE_RECEIPTS = "POST_DELETE_RECEIPTS";
         public static final String PRE_LIST_RECEIPTS = "PRE_LIST_RECEIPTS";
         public static final String POST_LIST_RECEIPTS = "POST_LIST_RECEIPTS";
+
+        public static final String PRE_ADD_PURPOSE_VERSION = "PRE_ADD_PURPOSE_VERSION";
+        public static final String POST_ADD_PURPOSE_VERSION = "POST_ADD_PURPOSE_VERSION";
+        public static final String PRE_GET_PURPOSE_VERSION_LIST = "PRE_GET_PURPOSE_VERSION_LIST";
+        public static final String POST_GET_PURPOSE_VERSION_LIST = "POST_GET_PURPOSE_VERSION_LIST";
+        public static final String PRE_GET_PURPOSE_VERSION = "PRE_GET_PURPOSE_VERSION";
+        public static final String POST_GET_PURPOSE_VERSION = "POST_GET_PURPOSE_VERSION";
+        public static final String PRE_DELETE_PURPOSE_VERSION = "PRE_DELETE_PURPOSE_VERSION";
+        public static final String POST_DELETE_PURPOSE_VERSION = "POST_DELETE_PURPOSE_VERSION";
     }
 }

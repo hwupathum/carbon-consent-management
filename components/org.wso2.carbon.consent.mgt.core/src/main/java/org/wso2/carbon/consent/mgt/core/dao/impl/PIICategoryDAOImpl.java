@@ -28,18 +28,25 @@ import org.wso2.carbon.database.utils.jdbc.exceptions.DataAccessException;
 import java.util.List;
 
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages;
+import java.util.UUID;
+
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.DELETE_PII_CATEGORY_BY_TENANT_ID_SQL;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.DELETE_PII_CATEGORY_SQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.GET_PII_CATEGORY_BY_UUID_SQL;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.GET_PURPOSE_COUNT_ASSOCIATED_WITH_PII_CATEGORY;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.GET_SP_PURPOSE_COUNT_ASSOCIATED_WITH_PII_CATEGORY;
-import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.INSERT_PII_CATEGORY_SQL;
-import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_PAGINATED_PII_CATEGORY_DB2;
-import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_PAGINATED_PII_CATEGORY_INFORMIX;
-import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_PAGINATED_PII_CATEGORY_MSSQL;
-import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_PAGINATED_PII_CATEGORY_MYSQL;
-import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_PAGINATED_PII_CATEGORY_ORACLE;
-import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SELECT_PII_CATEGORY_BY_ID_SQL;
-import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SELECT_PII_CATEGORY_BY_NAME_SQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.INSERT_PII_CATEGORY_WITH_UUID_SQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_PAGINATED_PII_CATEGORY_DB2_WITH_UUID;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_PAGINATED_PII_CATEGORY_INFORMIX_WITH_UUID;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_PAGINATED_PII_CATEGORY_MSSQL_WITH_UUID;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_PAGINATED_PII_CATEGORY_MYSQL_WITH_UUID;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_PAGINATED_PII_CATEGORY_ORACLE_WITH_UUID;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SELECT_PII_CATEGORY_BY_ID_WITH_UUID_SQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SELECT_PII_CATEGORY_BY_NAME_WITH_UUID_SQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_PAGINATED_PII_CATEGORY_WITH_NAME_MYSQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_PAGINATED_PII_CATEGORY_WITH_NAME_DB2;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_PAGINATED_PII_CATEGORY_WITH_NAME_MSSQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_PAGINATED_PII_CATEGORY_WITH_NAME_ORACLE;
 import static org.wso2.carbon.consent.mgt.core.util.JdbcUtils.isDB2DB;
 import static org.wso2.carbon.consent.mgt.core.util.JdbcUtils.isH2MySqlOrPostgresDB;
 import static org.wso2.carbon.consent.mgt.core.util.JdbcUtils.isInformixDB;
@@ -65,21 +72,23 @@ public class PIICategoryDAOImpl implements PIICategoryDAO {
 
         PIICategory purposeResult;
         int insertedId;
+        String uuid = UUID.randomUUID().toString();
         JdbcTemplate jdbcTemplate = JdbcUtils.getNewTemplate();
         try {
-            insertedId = jdbcTemplate.executeInsert(INSERT_PII_CATEGORY_SQL, (preparedStatement -> {
+            insertedId = jdbcTemplate.executeInsert(INSERT_PII_CATEGORY_WITH_UUID_SQL, (preparedStatement -> {
                 preparedStatement.setString(1, piiCategory.getName());
                 preparedStatement.setString(2, piiCategory.getDescription());
                 preparedStatement.setInt(3, piiCategory.getSensitive() ? 1 : 0);
                 preparedStatement.setInt(4, piiCategory.getTenantId());
                 preparedStatement.setString(5, piiCategory.getDisplayName());
+                preparedStatement.setString(6, uuid);
             }), piiCategory, true);
         } catch (DataAccessException e) {
             throw ConsentUtils.handleServerException(ErrorMessages.ERROR_CODE_ADD_PII_CATEGORY,
                                                      piiCategory.getName(), e);
         }
         purposeResult = new PIICategory(insertedId, piiCategory.getName(), piiCategory.getDescription(),
-                piiCategory.getSensitive(), piiCategory.getTenantId(), piiCategory.getDisplayName());
+                piiCategory.getSensitive(), piiCategory.getTenantId(), piiCategory.getDisplayName(), uuid);
         return purposeResult;
     }
 
@@ -90,13 +99,17 @@ public class PIICategoryDAOImpl implements PIICategoryDAO {
         PIICategory piiCategory;
 
         try {
-            piiCategory = jdbcTemplate.fetchSingleRecord(SELECT_PII_CATEGORY_BY_ID_SQL, (resultSet, rowNumber) ->
-                            new PIICategory(resultSet.getInt(1),
-                                    resultSet.getString(2),
-                                    resultSet.getString(3),
-                                    resultSet.getInt(4) == 1,
-                                    resultSet.getInt(5),
-                                    resultSet.getString(6)),
+            piiCategory = jdbcTemplate.fetchSingleRecord(SELECT_PII_CATEGORY_BY_ID_WITH_UUID_SQL,
+                    (resultSet, rowNumber) -> {
+                        PIICategory cat = new PIICategory(resultSet.getInt(1),
+                                resultSet.getString(2),
+                                resultSet.getString(3),
+                                resultSet.getInt(4) == 1,
+                                resultSet.getInt(5),
+                                resultSet.getString(6),
+                                resultSet.getString(7));
+                        return cat;
+                    },
                     preparedStatement -> preparedStatement.setInt(1, id));
         } catch (DataAccessException e) {
             throw ConsentUtils.handleServerException(ErrorMessages.ERROR_CODE_SELECT_PII_CATEGORY_BY_ID, String
@@ -115,26 +128,80 @@ public class PIICategoryDAOImpl implements PIICategoryDAO {
         try {
             String query;
             if (isH2MySqlOrPostgresDB()) {
-                query = LIST_PAGINATED_PII_CATEGORY_MYSQL;
+                query = LIST_PAGINATED_PII_CATEGORY_MYSQL_WITH_UUID;
             } else if (isDB2DB()) {
-                query = LIST_PAGINATED_PII_CATEGORY_DB2;
+                query = LIST_PAGINATED_PII_CATEGORY_DB2_WITH_UUID;
                 int initialOffset = offset;
                 offset = offset + limit;
                 limit = initialOffset + 1;
             } else if (isMSSqlDB()) {
-                query = LIST_PAGINATED_PII_CATEGORY_MSSQL;
+                query = LIST_PAGINATED_PII_CATEGORY_MSSQL_WITH_UUID;
                 int initialOffset = offset;
                 offset = limit + offset;
                 limit = initialOffset + 1;
             } else if (isInformixDB()) {
-                query = LIST_PAGINATED_PII_CATEGORY_INFORMIX;
+                query = LIST_PAGINATED_PII_CATEGORY_INFORMIX_WITH_UUID;
             } else {
                 //oracle
-                query = LIST_PAGINATED_PII_CATEGORY_ORACLE;
+                query = LIST_PAGINATED_PII_CATEGORY_ORACLE_WITH_UUID;
                 limit = offset + limit;
             }
             int finalLimit = limit;
             int finalOffset = offset;
+
+            piiCategories = jdbcTemplate.executeQuery(query,
+                    (resultSet, rowNumber) -> {
+                        PIICategory cat = new PIICategory(resultSet.getInt(1),
+                                resultSet.getString(2),
+                                resultSet.getString(3),
+                                resultSet.getInt(4) == 1,
+                                resultSet.getInt(5),
+                                resultSet.getString(6),
+                                resultSet.getString(7));
+                        return cat;
+                    },
+                    preparedStatement -> {
+                        preparedStatement.setInt(1, tenantId);
+                        preparedStatement.setInt(2, finalLimit);
+                        preparedStatement.setInt(3, finalOffset);
+                    });
+        } catch (DataAccessException e) {
+            throw new ConsentManagementServerException(String.format(ErrorMessages.ERROR_CODE_LIST_PII_CATEGORY
+                    .getMessage(), limit, offset),
+                    ErrorMessages.ERROR_CODE_LIST_PII_CATEGORY.getCode(), e);
+        }
+        return piiCategories;
+    }
+
+    @Override
+    public List<PIICategory> listPIICategories(String name, int limit, int offset, int tenantId)
+            throws ConsentManagementException {
+
+        JdbcTemplate jdbcTemplate = JdbcUtils.getNewTemplate();
+        List<PIICategory> piiCategories;
+        String nameFilter = (name == null || name.isEmpty()) ? "%" : "%" + name + "%";
+
+        try {
+            String query;
+            if (isH2MySqlOrPostgresDB()) {
+                query = LIST_PAGINATED_PII_CATEGORY_WITH_NAME_MYSQL;
+            } else if (isDB2DB()) {
+                query = LIST_PAGINATED_PII_CATEGORY_WITH_NAME_DB2;
+                int initialOffset = offset;
+                offset = offset + limit;
+                limit = initialOffset + 1;
+            } else if (isMSSqlDB()) {
+                query = LIST_PAGINATED_PII_CATEGORY_WITH_NAME_MSSQL;
+                int initialOffset = offset;
+                offset = limit + offset;
+                limit = initialOffset + 1;
+            } else {
+                query = LIST_PAGINATED_PII_CATEGORY_WITH_NAME_ORACLE;
+                limit = offset + limit;
+            }
+            int finalLimit = limit;
+            int finalOffset = offset;
+            String finalNameFilter = nameFilter;
 
             piiCategories = jdbcTemplate.executeQuery(query,
                     (resultSet, rowNumber) -> new PIICategory(resultSet.getInt(1),
@@ -142,11 +209,13 @@ public class PIICategoryDAOImpl implements PIICategoryDAO {
                             resultSet.getString(3),
                             resultSet.getInt(4) == 1,
                             resultSet.getInt(5),
-                            resultSet.getString(6)),
+                            resultSet.getString(6),
+                            resultSet.getString(7)),
                     preparedStatement -> {
                         preparedStatement.setInt(1, tenantId);
-                        preparedStatement.setInt(2, finalLimit);
-                        preparedStatement.setInt(3, finalOffset);
+                        preparedStatement.setString(2, finalNameFilter);
+                        preparedStatement.setInt(3, finalLimit);
+                        preparedStatement.setInt(4, finalOffset);
                     });
         } catch (DataAccessException e) {
             throw new ConsentManagementServerException(String.format(ErrorMessages.ERROR_CODE_LIST_PII_CATEGORY
@@ -195,13 +264,17 @@ public class PIICategoryDAOImpl implements PIICategoryDAO {
         PIICategory piiCategory;
 
         try {
-            piiCategory = jdbcTemplate.fetchSingleRecord(SELECT_PII_CATEGORY_BY_NAME_SQL, (resultSet, rowNumber) ->
-                            new PIICategory(resultSet.getInt(1),
-                                    resultSet.getString(2),
-                                    resultSet.getString(3),
-                                    resultSet.getInt(4) == 1,
-                                    resultSet.getInt(5),
-                                    resultSet.getString(6)),
+            piiCategory = jdbcTemplate.fetchSingleRecord(SELECT_PII_CATEGORY_BY_NAME_WITH_UUID_SQL,
+                    (resultSet, rowNumber) -> {
+                        PIICategory cat = new PIICategory(resultSet.getInt(1),
+                                resultSet.getString(2),
+                                resultSet.getString(3),
+                                resultSet.getInt(4) == 1,
+                                resultSet.getInt(5),
+                                resultSet.getString(6),
+                                resultSet.getString(7));
+                        return cat;
+                    },
                     preparedStatement -> {
                         preparedStatement.setString(1, name);
                         preparedStatement.setInt(2, tenantId);
@@ -246,5 +319,30 @@ public class PIICategoryDAOImpl implements PIICategoryDAO {
             return false;
         }
         return (count > 0);
+    }
+
+    @Override
+    public PIICategory getPIICategoryByUuid(String uuid, int tenantId) throws ConsentManagementException {
+
+        JdbcTemplate jdbcTemplate = JdbcUtils.getNewTemplate();
+        try {
+            return jdbcTemplate.fetchSingleRecord(GET_PII_CATEGORY_BY_UUID_SQL,
+                    (resultSet, rowNumber) -> {
+                        PIICategory cat = new PIICategory(resultSet.getInt(1),
+                                resultSet.getString(2),
+                                resultSet.getString(3),
+                                resultSet.getInt(4) == 1,
+                                resultSet.getInt(5),
+                                resultSet.getString(6),
+                                resultSet.getString(7));
+                        return cat;
+                    },
+                    preparedStatement -> {
+                        preparedStatement.setString(1, uuid);
+                        preparedStatement.setInt(2, tenantId);
+                    });
+        } catch (DataAccessException e) {
+            throw ConsentUtils.handleServerException(ErrorMessages.ERROR_CODE_SELECT_PII_CATEGORY_BY_ID, uuid, e);
+        }
     }
 }

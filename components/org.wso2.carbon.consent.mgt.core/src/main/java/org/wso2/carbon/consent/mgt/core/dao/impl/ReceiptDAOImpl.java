@@ -21,6 +21,7 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.consent.mgt.core.dao.ReceiptDAO;
 import org.wso2.carbon.consent.mgt.core.exception.ConsentManagementException;
 import org.wso2.carbon.consent.mgt.core.exception.ConsentManagementServerException;
+import org.wso2.carbon.consent.mgt.core.model.ConsentAuthorization;
 import org.wso2.carbon.consent.mgt.core.model.ConsentPurpose;
 import org.wso2.carbon.consent.mgt.core.model.PIICategoryValidity;
 import org.wso2.carbon.consent.mgt.core.model.Receipt;
@@ -62,10 +63,20 @@ import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.GET_RECEIPT
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.GET_RECEIPT_SP_SQL;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.GET_RECEIPT_SQL;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.GET_SP_PURPOSE_SQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.GET_SP_PURPOSE_WITH_VERSION_SQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.INSERT_SP_TO_PURPOSE_ASSOC_WITH_VERSION_SQL;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.INSERT_RECEIPT_PROPERTIES_SQL;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.INSERT_RECEIPT_PROPERTIES_SQL_H2;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.INSERT_RECEIPT_SP_ASSOC_SQL;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.INSERT_RECEIPT_SQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.INSERT_RECEIPT_V2_SQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.GET_RECEIPT_V2_SQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.INSERT_CONSENT_AUTHORIZATION_SQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.GET_CONSENT_AUTHORIZATIONS_SQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.GET_CONSENT_AUTHORIZATION_BY_USER_SQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.UPDATE_CONSENT_AUTHORIZATION_SQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.UPDATE_RECEIPT_STATE_SQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.GET_RECEIPT_STATE_SQL;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.INSERT_SP_PURPOSE_TO_PII_CAT_ASSOC_SQL;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.INSERT_SP_PURPOSE_TO_PURPOSE_CAT_ASSOC_SQL;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.INSERT_SP_TO_PURPOSE_ASSOC_SQL;
@@ -86,6 +97,26 @@ import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECE
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_SQL_WITHOUT_SP_TENANT_AND_PRINCIPLE_TENANT_INFORMIX;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_SQL_WITHOUT_SP_TENANT_AND_PRINCIPLE_TENANT_MSSQL;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_SQL_WITHOUT_SP_TENANT_AND_PRINCIPLE_TENANT_ORACLE;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_WITH_PURPOSE_SQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_WITH_PURPOSE_SQL_DB2;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_WITH_PURPOSE_SQL_INFORMIX;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_WITH_PURPOSE_SQL_MSSQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_WITH_PURPOSE_SQL_ORACLE;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_WITHOUT_SP_TENANT_WITH_PURPOSE_SQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_WITHOUT_SP_TENANT_WITH_PURPOSE_SQL_DB2;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_WITHOUT_SP_TENANT_WITH_PURPOSE_SQL_INFORMIX;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_WITHOUT_SP_TENANT_WITH_PURPOSE_SQL_MSSQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_WITHOUT_SP_TENANT_WITH_PURPOSE_SQL_ORACLE;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_WITHOUT_PRINCIPLE_TENANT_WITH_PURPOSE_SQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_WITHOUT_PRINCIPLE_TENANT_WITH_PURPOSE_SQL_DB2;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_WITHOUT_PRINCIPLE_TENANT_WITH_PURPOSE_SQL_INFORMIX;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_WITHOUT_PRINCIPLE_TENANT_WITH_PURPOSE_SQL_MSSQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_WITHOUT_PRINCIPLE_TENANT_WITH_PURPOSE_SQL_ORACLE;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_WITHOUT_SP_AND_PRINCIPLE_TENANT_WITH_PURPOSE_SQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_WITHOUT_SP_AND_PRINCIPLE_TENANT_WITH_PURPOSE_SQL_DB2;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_WITHOUT_SP_AND_PRINCIPLE_TENANT_WITH_PURPOSE_SQL_INFORMIX;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_WITHOUT_SP_AND_PRINCIPLE_TENANT_WITH_PURPOSE_SQL_MSSQL;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_WITHOUT_SP_AND_PRINCIPLE_TENANT_WITH_PURPOSE_SQL_ORACLE;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_SQL_WITHOUT_SP_TENANT_DB2;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_SQL_WITHOUT_SP_TENANT_INFORMIX;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_SQL_WITHOUT_SP_TENANT_MSSQL;
@@ -191,7 +222,7 @@ public class ReceiptDAOImpl implements ReceiptDAO {
         JdbcTemplate jdbcTemplate = JdbcUtils.getNewTemplate();
         try {
             receipt = jdbcTemplate.withTransaction(template -> {
-                Receipt internalReceipt = template.fetchSingleRecord(GET_RECEIPT_SQL, (resultSet, rowNumber) -> {
+                Receipt internalReceipt = template.fetchSingleRecord(GET_RECEIPT_V2_SQL, (resultSet, rowNumber) -> {
                     Receipt receiptInfo = new Receipt();
                     receiptInfo.setConsentReceiptId(receiptId);
                     receiptInfo.setVersion(resultSet.getString(1));
@@ -204,6 +235,10 @@ public class ReceiptDAOImpl implements ReceiptDAO {
                     receiptInfo.setPolicyUrl(resultSet.getString(8));
                     receiptInfo.setState(resultSet.getString(9));
                     receiptInfo.setPiiController(resultSet.getString(10));
+                    long vt = resultSet.getLong(11);
+                    if (!resultSet.wasNull()) {
+                        receiptInfo.setValidityTime(vt);
+                    }
                     return receiptInfo;
                 }, preparedStatement -> {
                     preparedStatement.setString(1, receiptId);
@@ -500,7 +535,11 @@ public class ReceiptDAOImpl implements ReceiptDAO {
         JdbcTemplate jdbcTemplate = JdbcUtils.getNewTemplate();
         try {
             jdbcTemplate.withTransaction(template -> {
-                template.executeInsert(INSERT_RECEIPT_SQL, (preparedStatement -> {
+                boolean hasV2Fields = receiptInput.getValidityTime() != null
+                        || (receiptInput.getState() != null && !ACTIVE_STATE.equals(receiptInput.getState()));
+                String insertSql = hasV2Fields ? INSERT_RECEIPT_V2_SQL : INSERT_RECEIPT_SQL;
+                String initialState = receiptInput.getState() != null ? receiptInput.getState() : ACTIVE_STATE;
+                template.executeInsert(insertSql, (preparedStatement -> {
                     preparedStatement.setString(1, receiptInput.getConsentReceiptId());
                     preparedStatement.setString(2, receiptInput.getVersion());
                     preparedStatement.setString(3, receiptInput.getJurisdiction());
@@ -511,9 +550,15 @@ public class ReceiptDAOImpl implements ReceiptDAO {
                     preparedStatement.setString(7, receiptInput.getPiiPrincipalId());
                     preparedStatement.setInt(8, receiptInput.getTenantId());
                     preparedStatement.setString(9, receiptInput.getPolicyUrl());
-                    preparedStatement.setString(10, ACTIVE_STATE);
+                    preparedStatement.setString(10, initialState);
                     preparedStatement.setString(11, receiptInput.getPiiControllerInfo());
-
+                    if (hasV2Fields) {
+                        if (receiptInput.getValidityTime() != null) {
+                            preparedStatement.setLong(12, receiptInput.getValidityTime());
+                        } else {
+                            preparedStatement.setNull(12, java.sql.Types.BIGINT);
+                        }
+                    }
                 }), receiptInput, false);
                 return null;
             });
@@ -549,15 +594,30 @@ public class ReceiptDAOImpl implements ReceiptDAO {
         int spToPurposeAssocId;
         JdbcTemplate jdbcTemplate = JdbcUtils.getNewTemplate();
         try {
-            spToPurposeAssocId = jdbcTemplate.withTransaction(template -> template.executeInsert(INSERT_SP_TO_PURPOSE_ASSOC_SQL, (preparedStatement -> {
-                preparedStatement.setInt(1, receiptToSPAssocId);
-                preparedStatement.setInt(2, receiptPurposeInput.getPurposeId());
-                preparedStatement.setString(3, receiptPurposeInput.getConsentType());
-                preparedStatement.setInt(4, receiptPurposeInput.isPrimaryPurpose() ? 1 : 0);
-                preparedStatement.setString(5, receiptPurposeInput.getTermination());
-                preparedStatement.setInt(6, receiptPurposeInput.isThirdPartyDisclosure() ? 1 : 0);
-                preparedStatement.setString(7, receiptPurposeInput.getThirdPartyName());
-            }), receiptPurposeInput, true));
+            if (receiptPurposeInput.getPurposeVersionId() != null) {
+                spToPurposeAssocId = jdbcTemplate.withTransaction(template ->
+                        template.executeInsert(INSERT_SP_TO_PURPOSE_ASSOC_WITH_VERSION_SQL, (preparedStatement -> {
+                            preparedStatement.setInt(1, receiptToSPAssocId);
+                            preparedStatement.setInt(2, receiptPurposeInput.getPurposeId());
+                            preparedStatement.setString(3, receiptPurposeInput.getConsentType());
+                            preparedStatement.setInt(4, receiptPurposeInput.isPrimaryPurpose() ? 1 : 0);
+                            preparedStatement.setString(5, receiptPurposeInput.getTermination());
+                            preparedStatement.setInt(6, receiptPurposeInput.isThirdPartyDisclosure() ? 1 : 0);
+                            preparedStatement.setString(7, receiptPurposeInput.getThirdPartyName());
+                            preparedStatement.setString(8, receiptPurposeInput.getPurposeVersionId());
+                        }), receiptPurposeInput, true));
+            } else {
+                spToPurposeAssocId = jdbcTemplate.withTransaction(template ->
+                        template.executeInsert(INSERT_SP_TO_PURPOSE_ASSOC_SQL, (preparedStatement -> {
+                            preparedStatement.setInt(1, receiptToSPAssocId);
+                            preparedStatement.setInt(2, receiptPurposeInput.getPurposeId());
+                            preparedStatement.setString(3, receiptPurposeInput.getConsentType());
+                            preparedStatement.setInt(4, receiptPurposeInput.isPrimaryPurpose() ? 1 : 0);
+                            preparedStatement.setString(5, receiptPurposeInput.getTermination());
+                            preparedStatement.setInt(6, receiptPurposeInput.isThirdPartyDisclosure() ? 1 : 0);
+                            preparedStatement.setString(7, receiptPurposeInput.getThirdPartyName());
+                        }), receiptPurposeInput, true));
+            }
         } catch (TransactionException e) {
             throw ConsentUtils.handleServerException(ErrorMessages.ERROR_CODE_ADD_SP_TO_PURPOSE_ASSOC,
                                                      String.valueOf(receiptPurposeInput.getPurposeName()), e);
@@ -666,7 +726,7 @@ public class ReceiptDAOImpl implements ReceiptDAO {
         JdbcTemplate jdbcTemplate = JdbcUtils.getNewTemplate();
         try {
             consentPurposes = jdbcTemplate.withTransaction(template -> {
-                List<ConsentPurpose> internalConsentPurposes = template.executeQuery(GET_SP_PURPOSE_SQL,
+                List<ConsentPurpose> internalConsentPurposes = template.executeQuery(GET_SP_PURPOSE_WITH_VERSION_SQL,
                                                                                          (resultSet, rowNumber) -> {
                     ConsentPurpose consentPurpose = new ConsentPurpose();
                     consentPurpose.setServiceToPurposeId(resultSet.getInt(1));
@@ -678,6 +738,10 @@ public class ReceiptDAOImpl implements ReceiptDAO {
                     consentPurpose.setPurpose(resultSet.getString(7));
                     consentPurpose.setPurposeDescription(resultSet.getString(8));
                     consentPurpose.setPurposeId(resultSet.getInt(9));
+                    String versionUuid = resultSet.getString(10);
+                    if (versionUuid != null) {
+                        consentPurpose.setPurposeVersionId(versionUuid);
+                    }
                     return consentPurpose;
                 }, preparedStatement -> preparedStatement.setInt(1, receiptToServiceId));
 
@@ -893,6 +957,228 @@ public class ReceiptDAOImpl implements ReceiptDAO {
         }
     }
 
+    @Override
+    public List<ReceiptListResponse> searchReceipts(int limit, int offset, String piiPrincipalId, int spTenantId,
+                                                     String service, String state, int principalTenantId,
+                                                     int purposeId) throws ConsentManagementException {
+
+        if (purposeId <= 0) {
+            return searchReceipts(limit, offset, piiPrincipalId, spTenantId, service, state, principalTenantId);
+        }
+
+        List<ReceiptListResponse> receiptListResponses;
+        JdbcTemplate jdbcTemplate = JdbcUtils.getNewTemplate();
+        try {
+            int piiPrincipalTenantId = ConsentUtils.getTenantIdFromCarbonContext();
+            if (piiPrincipalId == null) {
+                piiPrincipalId = SQL_FILTER_STRING_ANY;
+            } else if (piiPrincipalId.contains(QUERY_FILTER_STRING_ANY)) {
+                piiPrincipalId = piiPrincipalId.replaceAll(QUERY_FILTER_STRING_ANY_ESCAPED, SQL_FILTER_STRING_ANY);
+            }
+            if (service == null) {
+                service = SQL_FILTER_STRING_ANY;
+            } else if (service.contains(QUERY_FILTER_STRING_ANY)) {
+                service = service.replaceAll(QUERY_FILTER_STRING_ANY_ESCAPED, SQL_FILTER_STRING_ANY);
+            }
+            if (state == null) {
+                state = SQL_FILTER_STRING_ANY;
+            }
+
+            String finalPiiPrincipalId = piiPrincipalId;
+            String finalService = service;
+            String finalState = state;
+
+            if (spTenantId != 0 && principalTenantId != 0) {
+                receiptListResponses = searchReceiptWithPurpose(limit, offset, spTenantId, jdbcTemplate,
+                        piiPrincipalTenantId, finalPiiPrincipalId, finalService, finalState, purposeId);
+            } else if (spTenantId == 0 && principalTenantId != 0) {
+                receiptListResponses = searchWithoutSpTenantWithPurpose(limit, offset, jdbcTemplate,
+                        piiPrincipalTenantId, finalPiiPrincipalId, finalService, finalState, purposeId);
+            } else if (spTenantId != 0) {
+                receiptListResponses = searchWithoutPrincipleTenantWithPurpose(limit, offset, spTenantId, jdbcTemplate,
+                        finalPiiPrincipalId, finalService, finalState, purposeId);
+            } else {
+                receiptListResponses = searchWithoutSpAndPrincipleTenantWithPurpose(limit, offset, jdbcTemplate,
+                        finalPiiPrincipalId, finalService, finalState, purposeId);
+            }
+        } catch (DataAccessException e) {
+            throw ConsentUtils.handleServerException(ErrorMessages.ERROR_CODE_SEARCH_RECEIPTS, piiPrincipalId, e);
+        }
+        return receiptListResponses;
+    }
+
+    protected List<ReceiptListResponse> searchReceiptWithPurpose(int limit, int offset, int spTenantId,
+                                                                  JdbcTemplate jdbcTemplate,
+                                                                  int piiPrincipalTenantId,
+                                                                  String finalPiiPrincipalId, String finalService,
+                                                                  String finalState, int purposeId)
+            throws DataAccessException {
+
+        String query;
+        if (isH2MySqlOrPostgresDB()) {
+            query = SEARCH_RECEIPT_WITH_PURPOSE_SQL;
+        } else if (isDB2DB()) {
+            query = SEARCH_RECEIPT_WITH_PURPOSE_SQL_DB2;
+            int initialOffset = offset;
+            offset = offset + limit;
+            limit = initialOffset + 1;
+        } else if (isMSSqlDB()) {
+            int initialOffset = offset;
+            offset = limit + offset;
+            limit = initialOffset + 1;
+            query = SEARCH_RECEIPT_WITH_PURPOSE_SQL_MSSQL;
+        } else if (isInformixDB()) {
+            query = SEARCH_RECEIPT_WITH_PURPOSE_SQL_INFORMIX;
+        } else {
+            query = SEARCH_RECEIPT_WITH_PURPOSE_SQL_ORACLE;
+            limit = offset + limit;
+        }
+        int finalLimit = limit;
+        int finalOffset = offset;
+        return jdbcTemplate.executeQuery(query, (resultSet, rowNumber) ->
+                        new ReceiptListResponse(resultSet.getString(1), resultSet.getString(2),
+                                resultSet.getString(3), resultSet.getInt(4), resultSet.getString(5),
+                                resultSet.getString(6), resultSet.getString(7)),
+                preparedStatement -> {
+                    preparedStatement.setString(1, finalPiiPrincipalId);
+                    preparedStatement.setInt(2, piiPrincipalTenantId);
+                    preparedStatement.setString(3, finalService);
+                    preparedStatement.setInt(4, spTenantId);
+                    preparedStatement.setString(5, finalState);
+                    preparedStatement.setInt(6, purposeId);
+                    preparedStatement.setInt(7, finalLimit);
+                    preparedStatement.setInt(8, finalOffset);
+                });
+    }
+
+    protected List<ReceiptListResponse> searchWithoutSpTenantWithPurpose(int limit, int offset,
+                                                                          JdbcTemplate jdbcTemplate,
+                                                                          int piiPrincipalTenantId,
+                                                                          String finalPiiPrincipalId,
+                                                                          String finalService, String finalState,
+                                                                          int purposeId) throws DataAccessException {
+
+        String query;
+        if (isH2MySqlOrPostgresDB()) {
+            query = SEARCH_RECEIPT_WITHOUT_SP_TENANT_WITH_PURPOSE_SQL;
+        } else if (isDB2DB()) {
+            query = SEARCH_RECEIPT_WITHOUT_SP_TENANT_WITH_PURPOSE_SQL_DB2;
+            int initialOffset = offset;
+            offset = offset + limit;
+            limit = initialOffset + 1;
+        } else if (isMSSqlDB()) {
+            int initialOffset = offset;
+            offset = limit + offset;
+            limit = initialOffset + 1;
+            query = SEARCH_RECEIPT_WITHOUT_SP_TENANT_WITH_PURPOSE_SQL_MSSQL;
+        } else if (isInformixDB()) {
+            query = SEARCH_RECEIPT_WITHOUT_SP_TENANT_WITH_PURPOSE_SQL_INFORMIX;
+        } else {
+            query = SEARCH_RECEIPT_WITHOUT_SP_TENANT_WITH_PURPOSE_SQL_ORACLE;
+            limit = offset + limit;
+        }
+        int finalLimit = limit;
+        int finalOffset = offset;
+        return jdbcTemplate.executeQuery(query, (resultSet, rowNumber) ->
+                        new ReceiptListResponse(resultSet.getString(1), resultSet.getString(2),
+                                resultSet.getString(3), resultSet.getInt(4), resultSet.getString(5),
+                                resultSet.getString(6), resultSet.getString(7)),
+                preparedStatement -> {
+                    preparedStatement.setString(1, finalPiiPrincipalId);
+                    preparedStatement.setInt(2, piiPrincipalTenantId);
+                    preparedStatement.setString(3, finalService);
+                    preparedStatement.setString(4, finalState);
+                    preparedStatement.setInt(5, purposeId);
+                    preparedStatement.setInt(6, finalLimit);
+                    preparedStatement.setInt(7, finalOffset);
+                });
+    }
+
+    protected List<ReceiptListResponse> searchWithoutPrincipleTenantWithPurpose(int limit, int offset, int spTenantId,
+                                                                                 JdbcTemplate jdbcTemplate,
+                                                                                 String finalPiiPrincipalId,
+                                                                                 String finalService, String finalState,
+                                                                                 int purposeId)
+            throws DataAccessException {
+
+        String query;
+        if (isH2MySqlOrPostgresDB()) {
+            query = SEARCH_RECEIPT_WITHOUT_PRINCIPLE_TENANT_WITH_PURPOSE_SQL;
+        } else if (isDB2DB()) {
+            query = SEARCH_RECEIPT_WITHOUT_PRINCIPLE_TENANT_WITH_PURPOSE_SQL_DB2;
+            int initialOffset = offset;
+            offset = offset + limit;
+            limit = initialOffset + 1;
+        } else if (isMSSqlDB()) {
+            int initialOffset = offset;
+            offset = limit + offset;
+            limit = initialOffset + 1;
+            query = SEARCH_RECEIPT_WITHOUT_PRINCIPLE_TENANT_WITH_PURPOSE_SQL_MSSQL;
+        } else if (isInformixDB()) {
+            query = SEARCH_RECEIPT_WITHOUT_PRINCIPLE_TENANT_WITH_PURPOSE_SQL_INFORMIX;
+        } else {
+            query = SEARCH_RECEIPT_WITHOUT_PRINCIPLE_TENANT_WITH_PURPOSE_SQL_ORACLE;
+            limit = offset + limit;
+        }
+        int finalLimit = limit;
+        int finalOffset = offset;
+        return jdbcTemplate.executeQuery(query, (resultSet, rowNumber) ->
+                        new ReceiptListResponse(resultSet.getString(1), resultSet.getString(2),
+                                resultSet.getString(3), resultSet.getInt(4), resultSet.getString(5),
+                                resultSet.getString(6), resultSet.getString(7)),
+                preparedStatement -> {
+                    preparedStatement.setString(1, finalPiiPrincipalId);
+                    preparedStatement.setString(2, finalService);
+                    preparedStatement.setInt(3, spTenantId);
+                    preparedStatement.setString(4, finalState);
+                    preparedStatement.setInt(5, purposeId);
+                    preparedStatement.setInt(6, finalLimit);
+                    preparedStatement.setInt(7, finalOffset);
+                });
+    }
+
+    protected List<ReceiptListResponse> searchWithoutSpAndPrincipleTenantWithPurpose(int limit, int offset,
+                                                                                      JdbcTemplate jdbcTemplate,
+                                                                                      String finalPiiPrincipalId,
+                                                                                      String finalService,
+                                                                                      String finalState, int purposeId)
+            throws DataAccessException {
+
+        String query;
+        if (isH2MySqlOrPostgresDB()) {
+            query = SEARCH_RECEIPT_WITHOUT_SP_AND_PRINCIPLE_TENANT_WITH_PURPOSE_SQL;
+        } else if (isDB2DB()) {
+            query = SEARCH_RECEIPT_WITHOUT_SP_AND_PRINCIPLE_TENANT_WITH_PURPOSE_SQL_DB2;
+            int initialOffset = offset;
+            offset = offset + limit;
+            limit = initialOffset + 1;
+        } else if (isMSSqlDB()) {
+            int initialOffset = offset;
+            offset = limit + offset;
+            limit = initialOffset + 1;
+            query = SEARCH_RECEIPT_WITHOUT_SP_AND_PRINCIPLE_TENANT_WITH_PURPOSE_SQL_MSSQL;
+        } else if (isInformixDB()) {
+            query = SEARCH_RECEIPT_WITHOUT_SP_AND_PRINCIPLE_TENANT_WITH_PURPOSE_SQL_INFORMIX;
+        } else {
+            query = SEARCH_RECEIPT_WITHOUT_SP_AND_PRINCIPLE_TENANT_WITH_PURPOSE_SQL_ORACLE;
+            limit = offset + limit;
+        }
+        int finalLimit = limit;
+        int finalOffset = offset;
+        return jdbcTemplate.executeQuery(query, (resultSet, rowNumber) ->
+                        new ReceiptListResponse(resultSet.getString(1), resultSet.getString(2),
+                                resultSet.getString(3), resultSet.getInt(4), resultSet.getString(5),
+                                resultSet.getString(6), resultSet.getString(7)),
+                preparedStatement -> {
+                    preparedStatement.setString(1, finalPiiPrincipalId);
+                    preparedStatement.setString(2, finalService);
+                    preparedStatement.setString(3, finalState);
+                    preparedStatement.setInt(4, purposeId);
+                    preparedStatement.setInt(5, finalLimit);
+                    preparedStatement.setInt(6, finalOffset);
+                });
+    }
+
     protected void deleteSpToPurposeAssociation(int receiptToSPAssocId) throws
             ConsentManagementServerException {
 
@@ -906,6 +1192,141 @@ public class ReceiptDAOImpl implements ReceiptDAO {
         } catch (DataAccessException e) {
             throw ConsentUtils.handleServerException(ErrorMessages.ERROR_CODE_DELETE_RECEIPT, String
                     .valueOf(receiptToSPAssocId), e);
+        }
+    }
+
+    @Override
+    public void insertConsentAuthorization(ConsentAuthorization authorization) throws ConsentManagementException {
+
+        JdbcTemplate jdbcTemplate = JdbcUtils.getNewTemplate();
+        try {
+            jdbcTemplate.executeInsert(INSERT_CONSENT_AUTHORIZATION_SQL, preparedStatement -> {
+                preparedStatement.setString(1, authorization.getConsentReceiptId());
+                preparedStatement.setString(2, authorization.getUserId());
+                preparedStatement.setString(3, authorization.getStatus());
+                preparedStatement.setLong(4, authorization.getUpdatedTime());
+            }, authorization, false);
+        } catch (DataAccessException e) {
+            throw ConsentUtils.handleServerException(ErrorMessages.ERROR_CODE_ADD_RECEIPT,
+                    authorization.getConsentReceiptId(), e);
+        }
+    }
+
+    @Override
+    public List<ConsentAuthorization> getConsentAuthorizations(String consentReceiptId)
+            throws ConsentManagementException {
+
+        JdbcTemplate jdbcTemplate = JdbcUtils.getNewTemplate();
+        try {
+            return jdbcTemplate.executeQuery(GET_CONSENT_AUTHORIZATIONS_SQL,
+                    (resultSet, rowNumber) -> {
+                        ConsentAuthorization auth = new ConsentAuthorization();
+                        auth.setConsentReceiptId(resultSet.getString(1));
+                        auth.setUserId(resultSet.getString(2));
+                        auth.setStatus(resultSet.getString(3));
+                        auth.setUpdatedTime(resultSet.getLong(4));
+                        return auth;
+                    },
+                    preparedStatement -> preparedStatement.setString(1, consentReceiptId));
+        } catch (DataAccessException e) {
+            throw ConsentUtils.handleServerException(ErrorMessages.ERROR_CODE_RETRIEVE_RECEIPT_INFO,
+                    consentReceiptId, e);
+        }
+    }
+
+    @Override
+    public ConsentAuthorization getConsentAuthorizationByUser(String consentReceiptId, String userId)
+            throws ConsentManagementException {
+
+        JdbcTemplate jdbcTemplate = JdbcUtils.getNewTemplate();
+        try {
+            return jdbcTemplate.fetchSingleRecord(GET_CONSENT_AUTHORIZATION_BY_USER_SQL,
+                    (resultSet, rowNumber) -> {
+                        ConsentAuthorization auth = new ConsentAuthorization();
+                        auth.setConsentReceiptId(resultSet.getString(1));
+                        auth.setUserId(resultSet.getString(2));
+                        auth.setStatus(resultSet.getString(3));
+                        auth.setUpdatedTime(resultSet.getLong(4));
+                        return auth;
+                    },
+                    preparedStatement -> {
+                        preparedStatement.setString(1, consentReceiptId);
+                        preparedStatement.setString(2, userId);
+                    });
+        } catch (DataAccessException e) {
+            throw ConsentUtils.handleServerException(ErrorMessages.ERROR_CODE_RETRIEVE_RECEIPT_INFO,
+                    consentReceiptId, e);
+        }
+    }
+
+    @Override
+    public void updateConsentAuthorization(String consentReceiptId, String userId, String status, long updatedTime)
+            throws ConsentManagementException {
+
+        JdbcTemplate jdbcTemplate = JdbcUtils.getNewTemplate();
+        try {
+            jdbcTemplate.executeUpdate(UPDATE_CONSENT_AUTHORIZATION_SQL, preparedStatement -> {
+                preparedStatement.setString(1, status);
+                preparedStatement.setLong(2, updatedTime);
+                preparedStatement.setString(3, consentReceiptId);
+                preparedStatement.setString(4, userId);
+            });
+        } catch (DataAccessException e) {
+            throw ConsentUtils.handleServerException(ErrorMessages.ERROR_CODE_ADD_RECEIPT, consentReceiptId, e);
+        }
+    }
+
+    @Override
+    public void updateReceiptState(String consentReceiptId, String state) throws ConsentManagementException {
+
+        JdbcTemplate jdbcTemplate = JdbcUtils.getNewTemplate();
+        try {
+            jdbcTemplate.executeUpdate(UPDATE_RECEIPT_STATE_SQL, preparedStatement -> {
+                preparedStatement.setString(1, state);
+                preparedStatement.setString(2, consentReceiptId);
+            });
+        } catch (DataAccessException e) {
+            throw ConsentUtils.handleServerException(ErrorMessages.ERROR_CODE_ADD_RECEIPT, consentReceiptId, e);
+        }
+    }
+
+    @Override
+    public String getReceiptState(String consentReceiptId) throws ConsentManagementException {
+
+        JdbcTemplate jdbcTemplate = JdbcUtils.getNewTemplate();
+        try {
+            String[] result = new String[1];
+            jdbcTemplate.fetchSingleRecord(GET_RECEIPT_STATE_SQL,
+                    (resultSet, rowNumber) -> {
+                        result[0] = resultSet.getString(1);
+                        return result[0];
+                    },
+                    preparedStatement -> preparedStatement.setString(1, consentReceiptId));
+            return result[0];
+        } catch (DataAccessException e) {
+            throw ConsentUtils.handleServerException(ErrorMessages.ERROR_CODE_RETRIEVE_RECEIPT_INFO,
+                    consentReceiptId, e);
+        }
+    }
+
+    @Override
+    public Long getReceiptValidityTime(String consentReceiptId) throws ConsentManagementException {
+
+        JdbcTemplate jdbcTemplate = JdbcUtils.getNewTemplate();
+        try {
+            Long[] result = new Long[1];
+            jdbcTemplate.fetchSingleRecord(GET_RECEIPT_STATE_SQL,
+                    (resultSet, rowNumber) -> {
+                        resultSet.getString(1); // skip STATE column
+                        long vt = resultSet.getLong(2);
+                        result[0] = resultSet.wasNull() ? null : vt;
+                        return result[0];
+                    },
+                    preparedStatement -> preparedStatement.setString(1, consentReceiptId));
+            return result[0];
+        } catch (DataAccessException e) {
+            throw ConsentUtils.handleServerException(ErrorMessages.ERROR_CODE_RETRIEVE_RECEIPT_INFO,
+                    consentReceiptId, e);
         }
     }
 }

@@ -37,6 +37,8 @@ public class ReceiptInput {
     private int tenantId;
     private Map<String, String> properties;
     private String piiControllerInfo;
+    private Long validityTime;
+    private List<String> authorizations;
 
     public String getConsentReceiptId() {
 
@@ -166,5 +168,25 @@ public class ReceiptInput {
     public void setPiiControllerInfo(String piiControllerInfo) {
 
         this.piiControllerInfo = piiControllerInfo;
+    }
+
+    public Long getValidityTime() {
+
+        return validityTime;
+    }
+
+    public void setValidityTime(Long validityTime) {
+
+        this.validityTime = validityTime;
+    }
+
+    public List<String> getAuthorizations() {
+
+        return authorizations;
+    }
+
+    public void setAuthorizations(List<String> authorizations) {
+
+        this.authorizations = authorizations;
     }
 }

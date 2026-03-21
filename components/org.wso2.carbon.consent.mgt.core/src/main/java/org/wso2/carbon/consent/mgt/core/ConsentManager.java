@@ -18,13 +18,17 @@ package org.wso2.carbon.consent.mgt.core;
 
 import org.wso2.carbon.consent.mgt.core.exception.ConsentManagementException;
 import org.wso2.carbon.consent.mgt.core.model.AddReceiptResponse;
+import org.wso2.carbon.consent.mgt.core.model.ConsentAuthorization;
 import org.wso2.carbon.consent.mgt.core.model.PIICategory;
 import org.wso2.carbon.consent.mgt.core.model.Purpose;
 import org.wso2.carbon.consent.mgt.core.model.PurposeCategory;
+import org.wso2.carbon.consent.mgt.core.model.PurposeVersion;
 import org.wso2.carbon.consent.mgt.core.model.Receipt;
 import org.wso2.carbon.consent.mgt.core.model.ReceiptInput;
 import org.wso2.carbon.consent.mgt.core.model.ReceiptListResponse;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -293,6 +297,26 @@ public interface ConsentManager {
             ConsentManagementException;
 
     /**
+     * This API is used to search receipts filtered by purposeId.
+     *
+     * @param limit          No of search results.
+     * @param offset         Start index of the search.
+     * @param piiPrincipalId PII principal Id.
+     * @param spTenantDomain SP tenant domain.
+     * @param service        Service name.
+     * @param state          Receipt state.
+     * @param purposeId      Purpose ID to filter on, or &lt;= 0 to skip filtering.
+     * @return List of Receipts details.
+     * @throws ConsentManagementException Consent Management Exception.
+     */
+    default List<ReceiptListResponse> searchReceipts(int limit, int offset, String piiPrincipalId,
+                                                     String spTenantDomain, String service, String state,
+                                                     int purposeId) throws ConsentManagementException {
+
+        return searchReceipts(limit, offset, piiPrincipalId, spTenantDomain, service, state);
+    }
+
+    /**
      * This API is used to revoke a given receipt.
      *
      * @param receiptId Receipt Id.
@@ -327,5 +351,203 @@ public interface ConsentManager {
      * @return boolean true if receipt exists for match criteria
      */
     boolean isReceiptExist(String receiptId, String tenantAwareUsername, int tenantId) throws ConsentManagementException;
+
+    /**
+     * This API is used to add a new version to an existing purpose.
+     *
+     * @param purposeId ID of the purpose.
+     * @param purposeVersion {@link PurposeVersion} to add.
+     * @return Created {@link PurposeVersion}.
+     * @throws ConsentManagementException Consent Management Exception.
+     */
+    default PurposeVersion addPurposeVersion(int purposeId, PurposeVersion purposeVersion)
+            throws ConsentManagementException {
+
+        return null;
+    }
+
+    /**
+     * This API is used to retrieve all versions of a purpose.
+     *
+     * @param uuid UUID of the purpose.
+     * @return List of {@link PurposeVersion} entries.
+     * @throws ConsentManagementException Consent Management Exception.
+     */
+    default List<PurposeVersion> listPurposeVersions(String uuid) throws ConsentManagementException {
+
+        return new ArrayList<>();
+    }
+
+    /**
+     * This API is used to retrieve a specific version of a purpose.
+     *
+     * @param purposeUuid UUID of the purpose.
+     * @param versionUuid UUID of the version record.
+     * @return {@link PurposeVersion} matching the given UUIDs.
+     * @throws ConsentManagementException Consent Management Exception.
+     */
+    default PurposeVersion getPurposeVersion(String purposeUuid, String versionUuid) throws ConsentManagementException {
+
+        return null;
+    }
+
+    /**
+     * This API is used to delete a specific version of a purpose.
+     *
+     * @param purposeUuid UUID of the purpose.
+     * @param versionUuid UUID of the version record.
+     * @throws ConsentManagementException Consent Management Exception.
+     */
+    default void deletePurposeVersion(String purposeUuid, String versionUuid) throws ConsentManagementException {
+
+    }
+
+    /**
+     * This API is used to delete an existing purpose by its UUID.
+     *
+     * @param uuid UUID of the purpose.
+     * @throws ConsentManagementException Consent Management Exception.
+     */
+    default void deletePurpose(String uuid) throws ConsentManagementException {
+
+    }
+
+    /**
+     * This API is used to add a new version to an existing purpose identified by its UUID.
+     *
+     * @param purposeUuid    UUID of the purpose.
+     * @param purposeVersion {@link PurposeVersion} to add.
+     * @return Created {@link PurposeVersion}.
+     * @throws ConsentManagementException Consent Management Exception.
+     */
+    default PurposeVersion addPurposeVersion(String purposeUuid, PurposeVersion purposeVersion)
+            throws ConsentManagementException {
+
+        return null;
+    }
+
+    /**
+     * This API is used to get a purpose by its UUID.
+     *
+     * @param uuid UUID of the purpose.
+     * @return Purpose matching the UUID.
+     * @throws ConsentManagementException Consent Management Exception.
+     */
+    default Purpose getPurposeByUuid(String uuid) throws ConsentManagementException {
+
+        return null;
+    }
+
+    /**
+     * This API is used to delete an existing PII category by its UUID.
+     *
+     * @param uuid UUID of the PII category.
+     * @throws ConsentManagementException Consent Management Exception.
+     */
+    default void deletePIICategory(String uuid) throws ConsentManagementException {
+
+    }
+
+    /**
+     * This API is used to get a PII category by its UUID.
+     *
+     * @param uuid UUID of the PII category.
+     * @return PIICategory matching the UUID.
+     * @throws ConsentManagementException Consent Management Exception.
+     */
+    default PIICategory getPIICategoryByUuid(String uuid) throws ConsentManagementException {
+
+        return null;
+    }
+
+    /**
+     * This API is used to get a specific version of a purpose by its version label string.
+     *
+     * @param purposeId  DB ID of the purpose.
+     * @param versionLabel Version label string (e.g. "v1.0", "2024-Q1").
+     * @return PurposeVersion matching the label.
+     * @throws ConsentManagementException Consent Management Exception.
+     */
+    default PurposeVersion getPurposeVersionByLabel(int purposeId, String versionLabel)
+            throws ConsentManagementException {
+
+        return null;
+    }
+
+    /**
+     * This API is used to set the latest version of a purpose by version label.
+     *
+     * @param purposeId    DB ID of the purpose.
+     * @param versionLabel Version label string to set as latest.
+     * @throws ConsentManagementException Consent Management Exception.
+     */
+    default void setLatestPurposeVersion(int purposeId, String versionLabel) throws ConsentManagementException {
+
+    }
+
+    /**
+     * This API is used to create a purpose and its first version atomically.
+     *
+     * @param purpose      Purpose to create.
+     * @param firstVersion First version to associate with the purpose.
+     * @return Array where [0] is the created Purpose and [1] is the created PurposeVersion.
+     * @throws ConsentManagementException Consent Management Exception.
+     */
+    default Object[] addPurposeWithVersion(Purpose purpose, PurposeVersion firstVersion)
+            throws ConsentManagementException {
+
+        return null;
+    }
+
+    /**
+     * List purposes filtered by name substring (V2 API).
+     */
+    default List<Purpose> listPurposes(String group, String groupType, String name, int limit, int offset)
+            throws ConsentManagementException {
+
+        return Collections.emptyList();
+    }
+
+    /**
+     * List PII categories filtered by name substring (V2 API).
+     */
+    default List<PIICategory> listPIICategories(String name, int limit, int offset)
+            throws ConsentManagementException {
+
+        return Collections.emptyList();
+    }
+
+    /**
+     * Authorize or update a consent authorization record (V2 API).
+     *
+     * @param consentId  Consent receipt ID.
+     * @param userId     User performing the authorization.
+     * @param authStatus New status (APPROVED / REJECTED / REVOKED).
+     * @throws ConsentManagementException if operation fails.
+     */
+    default void authorizeConsent(String consentId, String userId, String authStatus)
+            throws ConsentManagementException {
+    }
+
+    /**
+     * Get all authorization records for a consent (V2 API).
+     */
+    default List<ConsentAuthorization> getConsentAuthorizations(String consentId)
+            throws ConsentManagementException {
+
+        return Collections.emptyList();
+    }
+
+    /**
+     * Validate consent status — lazily marks EXPIRED if validityTime has passed (V2 API).
+     *
+     * @param consentId Consent receipt ID.
+     * @return Current effective status string.
+     * @throws ConsentManagementException if operation fails.
+     */
+    default String validateConsentStatus(String consentId) throws ConsentManagementException {
+
+        return "ACTIVE";
+    }
 
 }

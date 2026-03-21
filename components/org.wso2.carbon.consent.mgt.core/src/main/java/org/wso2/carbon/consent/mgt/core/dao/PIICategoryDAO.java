@@ -65,6 +65,22 @@ public interface PIICategoryDAO {
     List<PIICategory> listPIICategories(int limit, int offset, int tenantId) throws ConsentManagementException;
 
     /**
+     * List {@link PIICategory} items filtered by name substring.
+     *
+     * @param name     Case-insensitive substring to match against NAME (null for any).
+     * @param limit    Maximum number of results.
+     * @param offset   Start offset.
+     * @param tenantId Tenant ID.
+     * @return List of matching {@link PIICategory} entries.
+     * @throws ConsentManagementException If error occurs while listing.
+     */
+    default List<PIICategory> listPIICategories(String name, int limit, int offset, int tenantId)
+            throws ConsentManagementException {
+
+        return java.util.Collections.emptyList();
+    }
+
+    /**
      * Delete {@link PIICategory} for a given ID.
      *
      * @param id ID of the {@link PIICategory} to be deleted.
@@ -101,4 +117,17 @@ public interface PIICategoryDAO {
      * @return
      */
     boolean isPIICategoryUsed(int id) throws ConsentManagementException;
+
+    /**
+     * Retrieve a {@link PIICategory} by its UUID.
+     *
+     * @param uuid     UUID of the {@link PIICategory}.
+     * @param tenantId Tenant ID.
+     * @return PIICategory for the given UUID, or {@code null} if not found.
+     * @throws ConsentManagementException If error occurs while retrieving the {@link PIICategory}.
+     */
+    default PIICategory getPIICategoryByUuid(String uuid, int tenantId) throws ConsentManagementException {
+
+        return null;
+    }
 }
