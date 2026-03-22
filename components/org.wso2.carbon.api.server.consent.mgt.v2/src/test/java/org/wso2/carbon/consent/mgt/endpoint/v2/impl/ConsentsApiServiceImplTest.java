@@ -986,4 +986,95 @@ public class ConsentsApiServiceImplTest {
         Assert.assertEquals(responseDTO.getState(), ConsentResponseDTO.StateEnum.PENDING,
                 "Create response state should be PENDING when authorizations list is present");
     }
+
+    // =========================================================================
+    // SUBJECT ID RESOLUTION RULES
+    // =========================================================================
+
+    /**
+     * Scenario: subjectId absent, no authorizations → subject resolved to current user, state ACTIVE.
+     */
+    @Test
+    public void testConsentsCreate_noSubjectId_resolvesToCurrentUser() {
+
+        UUID[] ids = createPurposeWithElement();
+        ConsentCreateRequest request = buildConsentRequest(ids[0], ids[1]);
+        // subjectId not set — should default to calling user ("admin")
+
+        Response created = consentsApiService.consentsCreate(request);
+        Assert.assertEquals(created.getStatus(), Response.Status.CREATED.getStatusCode());
+        String consentId = ((ConsentResponseDTO) created.getEntity()).getConsentId();
+
+        Response get = consentsApiService.consentsGet(consentId);
+        ConsentDTO dto = (ConsentDTO) get.getEntity();
+        Assert.assertEquals(dto.getSubjectId(), "admin",
+                "subjectId should default to the authenticated caller when not provided");
+        Assert.assertEquals(dto.getState(), ConsentDTO.StateEnum.ACTIVE,
+                "Consent with no authorizations should be ACTIVE");
+    }
+
+    /**
+     * Scenario: subjectId = currentUser, authorizations non-empty → PENDING, subject preserved.
+     */
+    @Test
+    public void testConsentsCreate_subjectIdEqualsCurrentUser_withAuthz_pendingAndSubjectPreserved() {
+
+        UUID[] ids = createPurposeWithElement();
+        ConsentCreateRequest request = buildConsentRequest(ids[0], ids[1]);
+        request.setSubjectId("admin"); // explicitly same as calling user
+        request.setAuthorizations(Collections.singletonList("approver@test.com"));
+
+        Response created = consentsApiService.consentsCreate(request);
+        Assert.assertEquals(created.getStatus(), Response.Status.CREATED.getStatusCode());
+        String consentId = ((ConsentResponseDTO) created.getEntity()).getConsentId();
+
+        Response get = consentsApiService.consentsGet(consentId);
+        ConsentDTO dto = (ConsentDTO) get.getEntity();
+        Assert.assertEquals(dto.getSubjectId(), "admin",
+                "subjectId should be preserved when explicitly set to the caller");
+        Assert.assertEquals(dto.getState(), ConsentDTO.StateEnum.PENDING,
+                "Consent with authorizations should be PENDING even when subjectId = currentUser");
+    }
+
+    /**
+     * Scenario: subjectId ≠ currentUser, authorizations non-empty → PENDING, subject from request.
+     */
+    @Test
+    public void testConsentsCreate_delegated_pendingAndSubjectPreserved() {
+
+        UUID[] ids = createPurposeWithElement();
+        ConsentCreateRequest request = buildConsentRequest(ids[0], ids[1]);
+        request.setSubjectId("subject@test.com");
+        request.setAuthorizations(Collections.singletonList("approver@test.com"));
+
+        Response created = consentsApiService.consentsCreate(request);
+        Assert.assertEquals(created.getStatus(), Response.Status.CREATED.getStatusCode());
+        String consentId = ((ConsentResponseDTO) created.getEntity()).getConsentId();
+
+        Response get = consentsApiService.consentsGet(consentId);
+        ConsentDTO dto = (ConsentDTO) get.getEntity();
+        Assert.assertEquals(dto.getSubjectId(), "subject@test.com",
+                "subjectId from request should be preserved for delegated consents");
+        Assert.assertEquals(dto.getState(), ConsentDTO.StateEnum.PENDING,
+                "Delegated consent with authorizations should be PENDING");
+    }
+
+    /**
+     * Scenario: subjectId ≠ currentUser, authorizations empty → 400 (no authorizer on record).
+     * This test already exists as testConsentsCreate_noAuthz_subjectIdMismatch_returns400 but is
+     * kept here to document it as part of the subject resolution rule set.
+     */
+    @Test
+    public void testConsentsCreate_delegated_noAuthz_returns400() {
+
+        UUID[] ids = createPurposeWithElement();
+        ConsentCreateRequest request = buildConsentRequest(ids[0], ids[1]);
+        request.setSubjectId("subject@test.com"); // different from "admin"
+        // no authorizations
+
+        Response response = consentsApiService.consentsCreate(request);
+
+        Assert.assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode(),
+                "Delegated consent without authorizations should return 400");
+    }
 }

@@ -219,12 +219,12 @@ public class ConsentReceiptsService {
         receiptInput.setCollectionMethod(DEFAULT_COLLECTION_METHOD);
         receiptInput.setLanguage(request.getLanguage());
         boolean hasAuthorizations = request.getAuthorizations() != null && !request.getAuthorizations().isEmpty();
+        String currentUser = carbonContext.getUsername();
         String subjectId = (request.getSubjectId() != null && !request.getSubjectId().isEmpty())
-                ? request.getSubjectId() : carbonContext.getUsername();
-        // Without authorizations, the subject must be the calling user
-        if (!hasAuthorizations && request.getSubjectId() != null && !request.getSubjectId().isEmpty()
-                && !request.getSubjectId().equals(carbonContext.getUsername())) {
-            throw handleClientException(ERROR_CODE_CONSENT_SUBJECT_MISMATCH, request.getSubjectId());
+                ? request.getSubjectId() : currentUser;
+        // Delegated consent (subject ≠ caller) requires at least one authorizer.
+        if (!subjectId.equals(currentUser) && !hasAuthorizations) {
+            throw handleClientException(ERROR_CODE_CONSENT_SUBJECT_MISMATCH, subjectId);
         }
         receiptInput.setPiiPrincipalId(subjectId);
         receiptInput.setTenantDomain(carbonContext.getTenantDomain());

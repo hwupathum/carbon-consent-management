@@ -56,10 +56,9 @@ public class ConsentCreateRequest  {
         return this;
     }
     
-    @ApiModelProperty(example = "a1b2c3d4-1234-5678-abcd-ef1234567890", required = true, value = "ID of the user giving consent")
+    @ApiModelProperty(example = "a1b2c3d4-1234-5678-abcd-ef1234567890", required = false, value = "ID of the user giving consent. If omitted, defaults to the authenticated caller.")
     @JsonProperty("subjectId")
     @Valid
-    @NotNull(message = "Property subjectId cannot be null.")
  @Size(min=1,max=255)
     public String getSubjectId() {
         return subjectId;
