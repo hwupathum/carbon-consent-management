@@ -252,7 +252,9 @@ public class ConsentConstants {
         ERROR_CODE_CONSENT_USER_NOT_IN_AUTHORIZATION_LIST("CM_00114",
                 "User '%s' is not in the authorization list for this consent."),
         ERROR_CODE_CONSENT_SUBJECT_MISMATCH("CM_00115",
-                "Subject ID '%s' does not match the authenticated user for a consent without authorizations.");
+                "Subject ID '%s' does not match the authenticated user for a consent without authorizations."),
+        ERROR_CODE_CANNOT_DELETE_DEFAULT_PURPOSE("CM_00116",
+                "Cannot delete purpose '%s': the DEFAULT purpose is protected and cannot be deleted.");
 
         private final String code;
         private final String message;

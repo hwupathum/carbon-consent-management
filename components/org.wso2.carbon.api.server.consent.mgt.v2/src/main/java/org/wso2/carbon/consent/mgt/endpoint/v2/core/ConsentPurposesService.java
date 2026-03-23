@@ -49,6 +49,7 @@ import javax.ws.rs.core.Response;
 
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.DEFAULT_PURPOSE_GROUP;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.*;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_CANNOT_DELETE_DEFAULT_PURPOSE;
 import static org.wso2.carbon.consent.mgt.core.util.ConsentUtils.handleClientException;
 
 /**
@@ -148,6 +149,13 @@ public class ConsentPurposesService {
      */
     public Response deletePurpose(UUID purposeId) throws ConsentManagementException {
 
+        Purpose purpose = consentManager.getPurposeByUuid(purposeId.toString());
+        if (purpose == null) {
+            throw handleClientException(ERROR_CODE_PURPOSE_UUID_NOT_FOUND, purposeId.toString());
+        }
+        if (DEFAULT_PURPOSE_GROUP.equals(purpose.getName())) {
+            throw handleClientException(ERROR_CODE_CANNOT_DELETE_DEFAULT_PURPOSE, purpose.getName());
+        }
         consentManager.deletePurpose(purposeId.toString());
         return Response.noContent().build();
     }
