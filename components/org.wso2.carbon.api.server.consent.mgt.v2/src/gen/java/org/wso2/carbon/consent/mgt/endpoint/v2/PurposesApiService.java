@@ -44,7 +44,7 @@ public interface PurposesApiService {
 
       public Response purposesGet(UUID purposeId);
 
-      public Response purposesList(String type, String name, Integer limit, Integer offset);
+      public Response purposesList(String filter, Integer limit, Integer offset);
 
       public Response purposesSetLatestVersion(UUID purposeId, SetLatestVersionRequest setLatestVersionRequest);
 

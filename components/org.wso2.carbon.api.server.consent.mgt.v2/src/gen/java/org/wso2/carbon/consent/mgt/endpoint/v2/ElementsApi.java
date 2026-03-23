@@ -121,7 +121,7 @@ public class ElementsApi  {
     
     
     @Produces({ "application/json" })
-    @ApiOperation(value = "List consent elements", notes = "Retrieve all consent elements with optional filtering by name. ", response = ElementListResponse.class, authorizations = {
+    @ApiOperation(value = "List consent elements", notes = "Retrieve all consent elements with optional filtering. ", response = ElementListResponse.class, authorizations = {
         @Authorization(value = "BasicAuth"),
         @Authorization(value = "OAuth2", scopes = {
             
@@ -133,9 +133,9 @@ public class ElementsApi  {
         @ApiResponse(code = 401, message = "Unauthorized", response = ErrorDTO.class),
         @ApiResponse(code = 500, message = "Server Error", response = ErrorDTO.class)
     })
-    public Response elementsList(    @Valid @Size(max=255)@ApiParam(value = "Filter elements by name (partial match, case-insensitive).")  @QueryParam("name") String name,     @Valid @Min(1)@ApiParam(value = "Maximum number of records to return.", defaultValue="10") @DefaultValue("10")  @QueryParam("limit") Integer limit,     @Valid @Min(0)@ApiParam(value = "Number of records to skip before collecting the response set.", defaultValue="0") @DefaultValue("0")  @QueryParam("offset") Integer offset) {
+    public Response elementsList(    @Valid@ApiParam(value = "Filter expression for advanced querying.  **Supported Comparison Operators:** - `eq` - equals - `ne` - not equals - `co` - contains (substring match) - `sw` - starts with - `ew` - ends with  **Logical Operators:** `and`, `or` with parentheses for grouping  **Filterable Attributes by Endpoint:** - **GET /consents:** `subjectId`, `serviceId`, `purposeId`, `state` - **GET /purposes:** `type`, `name`, `group` - **GET /elements:** `name`  **Examples:** - `filter=name eq \"User Authentication\"` - `filter=state eq \"AUTHORIZED\" and subjectId eq \"user123\"` - `filter=type eq \"MARKETING\" or type eq \"ANALYTICS\"` - `filter=name co \"auth\"` (contains \"auth\") ")  @QueryParam("filter") String filter,     @Valid @Min(1)@ApiParam(value = "Maximum number of records to return.", defaultValue="10") @DefaultValue("10")  @QueryParam("limit") Integer limit,     @Valid @Min(0)@ApiParam(value = "Number of records to skip before collecting the response set.", defaultValue="0") @DefaultValue("0")  @QueryParam("offset") Integer offset) {
 
-        return delegate.elementsList(name,  limit,  offset );
+        return delegate.elementsList(filter,  limit,  offset );
     }
 
 }

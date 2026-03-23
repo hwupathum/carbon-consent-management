@@ -254,7 +254,9 @@ public class ConsentConstants {
         ERROR_CODE_CONSENT_SUBJECT_MISMATCH("CM_00115",
                 "Subject ID '%s' does not match the authenticated user for a consent without authorizations."),
         ERROR_CODE_CANNOT_DELETE_DEFAULT_PURPOSE("CM_00116",
-                "Cannot delete purpose '%s': the DEFAULT purpose is protected and cannot be deleted.");
+                "Cannot delete purpose '%s': the DEFAULT purpose is protected and cannot be deleted."),
+        ERROR_CODE_INVALID_FILTER_EXPRESSION("CM_00117", "Invalid filter expression: %s"),
+        ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE("CM_00118", "Unsupported filter attribute: %s");
 
         private final String code;
         private final String message;

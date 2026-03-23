@@ -338,7 +338,7 @@ public class ElementsApiServiceImplTest {
         gamma.setName("GAMMA_ELEM_" + suffix);
         elementsApiService.elementsCreate(gamma);
 
-        Response response = elementsApiService.elementsList("ALPHA", 10, 0);
+        Response response = elementsApiService.elementsList("name co \"ALPHA\"", 10, 0);
 
         Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         ElementListResponse list = (ElementListResponse) response.getEntity();

@@ -28,6 +28,10 @@ import org.wso2.carbon.consent.mgt.core.util.ConsentUtils;
 import org.wso2.carbon.consent.mgt.endpoint.v2.model.ElementCreateRequest;
 import org.wso2.carbon.consent.mgt.endpoint.v2.model.ElementDTO;
 import org.wso2.carbon.consent.mgt.endpoint.v2.model.ElementListResponse;
+import org.wso2.carbon.consent.mgt.endpoint.v2.util.FilterAttributeExtractor;
+import org.wso2.carbon.identity.core.model.FilterTreeBuilder;
+import org.wso2.carbon.identity.core.model.Node;
+import org.wso2.carbon.identity.base.IdentityException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,6 +39,7 @@ import java.util.UUID;
 import javax.ws.rs.core.Response;
 
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_ELEMENT_UUID_NOT_FOUND;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_EXPRESSION;
 import static org.wso2.carbon.consent.mgt.core.util.ConsentUtils.handleClientException;
 
 
@@ -85,15 +90,32 @@ public class ConsentElementsService {
     }
 
     /**
-     * Lists elements with optional name filtering and pagination.
+     * Lists elements with optional filtering and pagination.
      *
-     * @param name   Element name filter with LIKE matching (may be null).
-     * @param limit  Maximum results.
-     * @param offset Pagination offset.
+     * @param filterExpression Filter expression string (null for no filtering).
+     * @param limit            Maximum results.
+     * @param offset           Pagination offset.
      * @return Response with ElementListResponse.
      * @throws ConsentManagementException if listing fails.
      */
-    public Response listElements(String name, int limit, int offset) throws ConsentManagementException {
+    public Response listElements(String filterExpression, int limit, int offset) throws ConsentManagementException {
+
+        String name = null;
+
+        // Parse filter expression if provided
+        if (StringUtils.isNotEmpty(filterExpression)) {
+            try {
+                FilterTreeBuilder filterTreeBuilder = new FilterTreeBuilder(filterExpression);
+                Node rootNode = filterTreeBuilder.buildTree();
+
+                // Extract filter attributes
+                FilterAttributeExtractor extractor = new FilterAttributeExtractor();
+                FilterAttributeExtractor.FilterAttributes attrs = extractor.extract(rootNode);
+                name = attrs.getName();
+            } catch (IdentityException | java.io.IOException e) {
+                throw handleClientException(ERROR_CODE_INVALID_FILTER_EXPRESSION, e.getMessage());
+            }
+        }
 
         List<PIICategory> categories = consentManager.listPIICategories(name, limit, offset);
         ElementListResponse listResponse = new ElementListResponse();

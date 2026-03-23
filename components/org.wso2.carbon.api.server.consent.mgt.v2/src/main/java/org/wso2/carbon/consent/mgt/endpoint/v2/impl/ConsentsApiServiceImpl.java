@@ -90,12 +90,12 @@ public class ConsentsApiServiceImpl implements ConsentsApiService {
     }
 
     @Override
-    public Response consentsList(String subjectId, String serviceId, UUID purposeId, String state, Integer limit, Integer offset) {
+    public Response consentsList(String filter, Integer limit, Integer offset) {
 
         try {
             int resolvedLimit = (limit != null) ? limit : ConsentConstants.DEFAULT_LIMIT;
             int resolvedOffset = (offset != null) ? offset : ConsentConstants.DEFAULT_OFFSET;
-            return receiptsService.listConsents(subjectId, serviceId, state, purposeId, resolvedLimit, resolvedOffset);
+            return receiptsService.listConsents(filter, resolvedLimit, resolvedOffset);
         } catch (ConsentManagementClientException e) {
             return ConsentV2EndpointUtils.handleBadRequestResponse(e, LOG);
         } catch (ConsentManagementException e) {

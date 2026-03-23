@@ -40,6 +40,10 @@ import org.wso2.carbon.consent.mgt.endpoint.v2.model.PurposeVersionDTO;
 import org.wso2.carbon.consent.mgt.endpoint.v2.model.PurposeVersionListResponse;
 import org.wso2.carbon.consent.mgt.endpoint.v2.model.PurposeVersionSummaryDTO;
 import org.wso2.carbon.consent.mgt.endpoint.v2.model.SetLatestVersionRequest;
+import org.wso2.carbon.consent.mgt.endpoint.v2.util.FilterAttributeExtractor;
+import org.wso2.carbon.identity.core.model.FilterTreeBuilder;
+import org.wso2.carbon.identity.core.model.Node;
+import org.wso2.carbon.identity.base.IdentityException;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,7 +52,10 @@ import java.util.UUID;
 import javax.ws.rs.core.Response;
 
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.DEFAULT_PURPOSE_GROUP;
-import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.*;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_EXPRESSION;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_PURPOSE_UUID_NOT_FOUND;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_PURPOSE_VERSION_NOT_FOUND;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_ELEMENT_UUID_NOT_FOUND;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_CANNOT_DELETE_DEFAULT_PURPOSE;
 import static org.wso2.carbon.consent.mgt.core.util.ConsentUtils.handleClientException;
 
@@ -111,16 +118,34 @@ public class ConsentPurposesService {
     }
 
     /**
-     * Lists purposes with optional group and name filtering and pagination.
+     * Lists purposes with optional filtering and pagination.
      *
-     * @param type  Type filter (may be null).
-     * @param name   Purpose name filter with LIKE matching (may be null).
-     * @param limit  Maximum results.
-     * @param offset Pagination offset.
+     * @param filterExpression Filter expression string (null for no filtering).
+     * @param limit            Maximum results.
+     * @param offset           Pagination offset.
      * @return Response with list of PurposeSummaryDTOs.
      * @throws ConsentManagementException if listing fails.
      */
-    public Response listPurposes(String type, String name, int limit, int offset) throws ConsentManagementException {
+    public Response listPurposes(String filterExpression, int limit, int offset) throws ConsentManagementException {
+
+        String type = null;
+        String name = null;
+
+        // Parse filter expression if provided
+        if (StringUtils.isNotEmpty(filterExpression)) {
+            try {
+                FilterTreeBuilder filterTreeBuilder = new FilterTreeBuilder(filterExpression);
+                Node rootNode = filterTreeBuilder.buildTree();
+
+                // Extract filter attributes
+                FilterAttributeExtractor extractor = new FilterAttributeExtractor();
+                FilterAttributeExtractor.FilterAttributes attrs = extractor.extract(rootNode);
+                type = attrs.getType();
+                name = attrs.getName();
+            } catch (IdentityException | java.io.IOException e) {
+                throw handleClientException(ERROR_CODE_INVALID_FILTER_EXPRESSION, e.getMessage());
+            }
+        }
 
         List<Purpose> purposes = consentManager.listPurposes(null, type, name, limit, offset);
         List<PurposeSummaryDTO> items = new ArrayList<>();

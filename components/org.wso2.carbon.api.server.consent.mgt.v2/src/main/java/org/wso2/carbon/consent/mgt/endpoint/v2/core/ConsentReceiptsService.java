@@ -22,8 +22,10 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.consent.mgt.core.ConsentManager;
+import org.wso2.carbon.consent.mgt.core.constant.ConsentConstants;
 import org.wso2.carbon.consent.mgt.core.exception.ConsentManagementException;
 import org.wso2.carbon.consent.mgt.core.exception.ConsentManagementServerException;
+import org.wso2.carbon.consent.mgt.core.util.ConsentUtils;
 import org.wso2.carbon.consent.mgt.core.model.AddReceiptResponse;
 import org.wso2.carbon.consent.mgt.core.model.ConsentAuthorization;
 import org.wso2.carbon.consent.mgt.core.model.ConsentPurpose;
@@ -51,6 +53,10 @@ import org.wso2.carbon.consent.mgt.endpoint.v2.model.ConsentedElementDTO;
 import org.wso2.carbon.consent.mgt.endpoint.v2.model.ConsentedPurposeDTO;
 import org.wso2.carbon.consent.mgt.endpoint.v2.model.ElementTerminationInfo;
 import org.wso2.carbon.consent.mgt.endpoint.v2.model.KeyValuePair;
+import org.wso2.carbon.consent.mgt.endpoint.v2.util.FilterAttributeExtractor;
+import org.wso2.carbon.identity.core.model.FilterTreeBuilder;
+import org.wso2.carbon.identity.core.model.Node;
+import org.wso2.carbon.identity.base.IdentityException;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 
 import java.util.ArrayList;
@@ -61,9 +67,14 @@ import java.util.Map;
 import java.util.UUID;
 import javax.ws.rs.core.Response;
 
-import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.*;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ACTIVE_STATE;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.REVOKE_STATE;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PENDING_STATE;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.API_VERSION;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.DEFAULT_PURPOSE_GROUP;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_ELEMENT_UUID_NOT_FOUND;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_CONSENT_INVALID_STATE_FOR_AUTHORIZE;
+import static org.wso2.carbon.consent.mgt.core.util.ConsentUtils.handleClientException;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_CONSENT_USER_NOT_IN_AUTHORIZATION_LIST;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_CONSENT_SUBJECT_MISMATCH;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_PURPOSE_CATEGORY_NOT_FOUND;
@@ -134,17 +145,38 @@ public class ConsentReceiptsService {
     /**
      * Lists consent receipts with optional filtering and pagination.
      *
-     * @param subjectId PII principal ID filter.
-     * @param serviceId        Service name filter.
-     * @param state            State filter.
-     * @param purposeIdParam   Purpose ID filter (0 or negative means no filter).
+     * @param filterExpression Filter expression string (null for no filtering).
      * @param limit            Maximum results.
      * @param offset           Pagination offset.
      * @return Response with list of ConsentSummaryDTOs.
      * @throws ConsentManagementException if listing fails.
      */
-    public Response listConsents(String subjectId, String serviceId, String state,
-                                 UUID purposeIdParam, int limit, int offset) throws ConsentManagementException {
+    public Response listConsents(String filterExpression, int limit, int offset) throws ConsentManagementException {
+
+        String subjectId = null;
+        String serviceId = null;
+        String state = null;
+        UUID purposeIdParam = null;
+
+        // Parse filter expression if provided
+        if (StringUtils.isNotEmpty(filterExpression)) {
+            try {
+                FilterTreeBuilder filterTreeBuilder = new FilterTreeBuilder(filterExpression);
+                Node rootNode = filterTreeBuilder.buildTree();
+
+                // Extract filter attributes
+                FilterAttributeExtractor extractor = new FilterAttributeExtractor();
+                FilterAttributeExtractor.FilterAttributes attrs = extractor.extract(rootNode);
+                subjectId = attrs.getSubjectId();
+                serviceId = attrs.getServiceId();
+                state = attrs.getState();
+                purposeIdParam = attrs.getPurposeId();
+            } catch (IdentityException | java.io.IOException e) {
+                throw handleClientException(
+                        ConsentConstants.ErrorMessages.ERROR_CODE_INVALID_FILTER_EXPRESSION,
+                        e.getMessage());
+            }
+        }
 
         List<ReceiptListResponse> receipts;
         if (purposeIdParam != null) {

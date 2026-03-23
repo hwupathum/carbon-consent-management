@@ -89,12 +89,12 @@ public class ElementsApiServiceImpl implements ElementsApiService {
     }
 
     @Override
-    public Response elementsList(String name, Integer limit, Integer offset) {
+    public Response elementsList(String filter, Integer limit, Integer offset) {
 
         try {
             int resolvedLimit = (limit != null) ? limit : ConsentConstants.DEFAULT_LIMIT;
             int resolvedOffset = (offset != null) ? offset : ConsentConstants.DEFAULT_OFFSET;
-            return elementsService.listElements(name, resolvedLimit, resolvedOffset);
+            return elementsService.listElements(filter, resolvedLimit, resolvedOffset);
         } catch (ConsentManagementClientException e) {
             return ConsentV2EndpointUtils.handleBadRequestResponse(e, LOG);
         } catch (ConsentManagementException e) {

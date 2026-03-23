@@ -78,11 +78,10 @@ paths:
         - Purposes
       summary: List all purposes
       description: |
-        Retrieve all purposes with optional filtering by type, name, or elements.
+        Retrieve all purposes with optional filtering.
       operationId: purposesList
       parameters:
-        - $ref: '#/components/parameters/group'
-        - $ref: '#/components/parameters/purposeName'
+        - $ref: '#/components/parameters/filter'
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/offset'
       responses:
@@ -339,10 +338,10 @@ paths:
         - Elements
       summary: List consent elements
       description: |
-        Retrieve all consent elements with optional filtering by name.
+        Retrieve all consent elements with optional filtering.
       operationId: elementsList
       parameters:
-        - $ref: '#/components/parameters/elementName'
+        - $ref: '#/components/parameters/filter'
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/offset'
       responses:
@@ -452,13 +451,10 @@ paths:
         - Consents
       summary: List consent records
       description: |
-        Retrieve consent records with optional filtering by user, service, state, or purpose.
+        Retrieve consent records with optional filtering.
       operationId: consentsList
       parameters:
-        - $ref: '#/components/parameters/subjectId'
-        - $ref: '#/components/parameters/serviceId'
-        - $ref: '#/components/parameters/purposeIdQuery'
-        - $ref: '#/components/parameters/consentState'
+        - $ref: '#/components/parameters/filter'
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/offset'
       responses:
@@ -653,6 +649,36 @@ components:
         minimum: 0
         default: 0
       description: Number of records to skip before collecting the response set.
+
+    filter:
+      name: filter
+      in: query
+      required: false
+      schema:
+        type: string
+      description: |
+        Filter expression for advanced querying.
+
+        **Supported Comparison Operators:**
+        - `eq` - equals
+        - `ne` - not equals
+        - `co` - contains (substring match)
+        - `sw` - starts with
+        - `ew` - ends with
+
+        **Logical Operators:** `and`, `or` with parentheses for grouping
+
+        **Filterable Attributes by Endpoint:**
+        - **GET /consents:** `subjectId`, `serviceId`, `purposeId`, `state`
+        - **GET /purposes:** `type`, `name`, `group`
+        - **GET /elements:** `name`
+
+        **Examples:**
+        - `filter=name eq "User Authentication"`
+        - `filter=state eq "AUTHORIZED" and subjectId eq "user123"`
+        - `filter=type eq "MARKETING" or type eq "ANALYTICS"`
+        - `filter=name co "auth"` (contains "auth")
+      example: 'subjectId eq "user123" and state eq "AUTHORIZED"'
 
     purposeId:
       name: purposeId

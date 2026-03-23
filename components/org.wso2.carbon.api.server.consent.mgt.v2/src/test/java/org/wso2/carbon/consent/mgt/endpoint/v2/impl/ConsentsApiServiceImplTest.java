@@ -202,7 +202,7 @@ public class ConsentsApiServiceImplTest {
     @Test
     public void testConsentsList() {
 
-        Response response = consentsApiService.consentsList(null, null, null, null, 10, 0);
+        Response response = consentsApiService.consentsList(null, 10, 0);
 
         Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         Assert.assertNotNull(response.getEntity());
@@ -211,37 +211,37 @@ public class ConsentsApiServiceImplTest {
     @Test
     public void testConsentsListWithDefaultPagination() {
 
-        Response response = consentsApiService.consentsList(null, null, null, null, null, null);
+        Response response = consentsApiService.consentsList(null, null, null);
 
         Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         Assert.assertNotNull(response.getEntity());
     }
 
     /**
-     * Data provider for list filter tests: filter type, subject ID, service ID, state.
+     * Data provider for list filter tests: filter expression.
      */
     @DataProvider(name = "listFilters")
     public Object[][] listFilters() {
         return new Object[][] {
-            { "subject ID", "user123", null, null, null },
-            { "service ID", null, "service1", null, null },
-            { "state", null, null, null, "ACTIVE" }
+            { "subject ID filter", "subjectId eq \"user123\"" },
+            { "service ID filter", "serviceId eq \"service1\"" },
+            { "state filter", "state eq \"ACTIVE\"" }
         };
     }
 
     @Test(dataProvider = "listFilters")
-    public void testConsentsList_withFilters(String filterType, String subjectId, String serviceId, UUID purposeId, String state) {
+    public void testConsentsList_withFilters(String filterType, String filter) {
 
-        Response response = consentsApiService.consentsList(subjectId, serviceId, purposeId, state, 10, 0);
+        Response response = consentsApiService.consentsList(filter, 10, 0);
 
         Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode(),
-                "List consents with " + filterType + " filter should return 200");
+                "List consents with " + filterType + " should return 200");
     }
 
     @Test
     public void testConsentsListEmpty() {
 
-        Response response = consentsApiService.consentsList(null, null, null, null, 10, 0);
+        Response response = consentsApiService.consentsList(null, 10, 0);
 
         Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         Assert.assertNotNull(response.getEntity());
@@ -391,7 +391,8 @@ public class ConsentsApiServiceImplTest {
         UUID[] ids = createPurposeWithElement();
         UUID purposeId = ids[0];
 
-        Response response = consentsApiService.consentsList(null, null, purposeId, null, 10, 0);
+        String filter = "purposeId eq \"" + purposeId.toString() + "\"";
+        Response response = consentsApiService.consentsList(filter, 10, 0);
 
         Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         Assert.assertNotNull(response.getEntity());

@@ -125,7 +125,7 @@ public class ConsentsApi  {
     
     
     @Produces({ "application/json" })
-    @ApiOperation(value = "List consent records", notes = "Retrieve consent records with optional filtering by user, service, state, or purpose. ", response = ConsentListResponse.class, authorizations = {
+    @ApiOperation(value = "List consent records", notes = "Retrieve consent records with optional filtering. ", response = ConsentListResponse.class, authorizations = {
         @Authorization(value = "BasicAuth"),
         @Authorization(value = "OAuth2", scopes = {
             
@@ -137,9 +137,9 @@ public class ConsentsApi  {
         @ApiResponse(code = 401, message = "Unauthorized", response = ErrorDTO.class),
         @ApiResponse(code = 500, message = "Server Error", response = ErrorDTO.class)
     })
-    public Response consentsList(    @Valid @Size(max=255)@ApiParam(value = "Filter by subject user ID.")  @QueryParam("subjectId") String subjectId,     @Valid @Size(max=255)@ApiParam(value = "Filter by service ID.")  @QueryParam("serviceId") String serviceId,     @Valid@ApiParam(value = "Filter consents by purpose ID.")  @QueryParam("purposeId") UUID purposeId,     @Valid@ApiParam(value = "Filter consents by state.", allowableValues="PENDING, ACTIVE, REJECTED, REVOKED, EXPIRED")  @QueryParam("state") String state,     @Valid @Min(1)@ApiParam(value = "Maximum number of records to return.", defaultValue="10") @DefaultValue("10")  @QueryParam("limit") Integer limit,     @Valid @Min(0)@ApiParam(value = "Number of records to skip before collecting the response set.", defaultValue="0") @DefaultValue("0")  @QueryParam("offset") Integer offset) {
+    public Response consentsList(    @Valid@ApiParam(value = "Filter expression for advanced querying.  **Supported Comparison Operators:** - `eq` - equals - `ne` - not equals - `co` - contains (substring match) - `sw` - starts with - `ew` - ends with  **Logical Operators:** `and`, `or` with parentheses for grouping  **Filterable Attributes by Endpoint:** - **GET /consents:** `subjectId`, `serviceId`, `purposeId`, `state` - **GET /purposes:** `type`, `name`, `group` - **GET /elements:** `name`  **Examples:** - `filter=name eq \"User Authentication\"` - `filter=state eq \"AUTHORIZED\" and subjectId eq \"user123\"` - `filter=type eq \"MARKETING\" or type eq \"ANALYTICS\"` - `filter=name co \"auth\"` (contains \"auth\") ")  @QueryParam("filter") String filter,     @Valid @Min(1)@ApiParam(value = "Maximum number of records to return.", defaultValue="10") @DefaultValue("10")  @QueryParam("limit") Integer limit,     @Valid @Min(0)@ApiParam(value = "Number of records to skip before collecting the response set.", defaultValue="0") @DefaultValue("0")  @QueryParam("offset") Integer offset) {
 
-        return delegate.consentsList(subjectId,  serviceId,  purposeId,  state,  limit,  offset );
+        return delegate.consentsList(filter,  limit,  offset );
     }
 
     @Valid

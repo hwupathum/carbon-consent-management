@@ -48,7 +48,7 @@ public class ConsentCreateRequest  {
 
 
     /**
-    * ID of the user giving consent
+    * ID of the user giving consent. If omitted, defaults to the authenticated caller. Required when the subject differs from the caller (delegated consent). 
     **/
     public ConsentCreateRequest subjectId(String subjectId) {
 
@@ -56,10 +56,9 @@ public class ConsentCreateRequest  {
         return this;
     }
     
-    @ApiModelProperty(example = "a1b2c3d4-1234-5678-abcd-ef1234567890", required = false, value = "ID of the user giving consent. If omitted, defaults to the authenticated caller.")
+    @ApiModelProperty(example = "a1b2c3d4-1234-5678-abcd-ef1234567890", value = "ID of the user giving consent. If omitted, defaults to the authenticated caller. Required when the subject differs from the caller (delegated consent). ")
     @JsonProperty("subjectId")
-    @Valid
- @Size(min=1,max=255)
+    @Valid @Size(min=1,max=255)
     public String getSubjectId() {
         return subjectId;
     }

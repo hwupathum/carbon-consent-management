@@ -92,12 +92,12 @@ public class PurposesApiServiceImpl implements PurposesApiService {
     }
 
     @Override
-    public Response purposesList(String type, String name, Integer limit, Integer offset) {
+    public Response purposesList(String filter, Integer limit, Integer offset) {
 
         try {
             int resolvedLimit = (limit != null) ? limit : ConsentConstants.DEFAULT_LIMIT;
             int resolvedOffset = (offset != null) ? offset : ConsentConstants.DEFAULT_OFFSET;
-            return purposesService.listPurposes(type, name, resolvedLimit, resolvedOffset);
+            return purposesService.listPurposes(filter, resolvedLimit, resolvedOffset);
         } catch (ConsentManagementClientException e) {
             return ConsentV2EndpointUtils.handleBadRequestResponse(e, LOG);
         } catch (ConsentManagementException e) {

@@ -125,7 +125,7 @@ public class PurposesApi  {
     
     
     @Produces({ "application/json" })
-    @ApiOperation(value = "List all purposes", notes = "Retrieve all purposes with optional filtering by type, name, or elements. ", response = PurposeListResponse.class, authorizations = {
+    @ApiOperation(value = "List all purposes", notes = "Retrieve all purposes with optional filtering. ", response = PurposeListResponse.class, authorizations = {
         @Authorization(value = "BasicAuth"),
         @Authorization(value = "OAuth2", scopes = {
             
@@ -137,9 +137,9 @@ public class PurposesApi  {
         @ApiResponse(code = 401, message = "Unauthorized", response = ErrorDTO.class),
         @ApiResponse(code = 500, message = "Server Error", response = ErrorDTO.class)
     })
-    public Response purposesList(    @Valid @Size(max=255)@ApiParam(value = "Filter by purpose type.")  @QueryParam("type") String type,     @Valid @Size(max=255)@ApiParam(value = "Filter purposes by name (partial match, case-insensitive).")  @QueryParam("name") String name,     @Valid @Min(1)@ApiParam(value = "Maximum number of records to return.", defaultValue="10") @DefaultValue("10")  @QueryParam("limit") Integer limit,     @Valid @Min(0)@ApiParam(value = "Number of records to skip before collecting the response set.", defaultValue="0") @DefaultValue("0")  @QueryParam("offset") Integer offset) {
+    public Response purposesList(    @Valid@ApiParam(value = "Filter expression for advanced querying.  **Supported Comparison Operators:** - `eq` - equals - `ne` - not equals - `co` - contains (substring match) - `sw` - starts with - `ew` - ends with  **Logical Operators:** `and`, `or` with parentheses for grouping  **Filterable Attributes by Endpoint:** - **GET /consents:** `subjectId`, `serviceId`, `purposeId`, `state` - **GET /purposes:** `type`, `name`, `group` - **GET /elements:** `name`  **Examples:** - `filter=name eq \"User Authentication\"` - `filter=state eq \"AUTHORIZED\" and subjectId eq \"user123\"` - `filter=type eq \"MARKETING\" or type eq \"ANALYTICS\"` - `filter=name co \"auth\"` (contains \"auth\") ")  @QueryParam("filter") String filter,     @Valid @Min(1)@ApiParam(value = "Maximum number of records to return.", defaultValue="10") @DefaultValue("10")  @QueryParam("limit") Integer limit,     @Valid @Min(0)@ApiParam(value = "Number of records to skip before collecting the response set.", defaultValue="0") @DefaultValue("0")  @QueryParam("offset") Integer offset) {
 
-        return delegate.purposesList(type,  name,  limit,  offset );
+        return delegate.purposesList(filter,  limit,  offset );
     }
 
     @Valid

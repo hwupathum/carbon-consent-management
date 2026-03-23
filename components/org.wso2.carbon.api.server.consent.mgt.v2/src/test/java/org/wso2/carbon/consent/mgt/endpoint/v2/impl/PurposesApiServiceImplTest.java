@@ -321,7 +321,7 @@ public class PurposesApiServiceImplTest {
         req2.setType("ANLYT");
         purposesApiService.purposesCreate(req2);
 
-        Response response = purposesApiService.purposesList(null, null, 10, 0);
+        Response response = purposesApiService.purposesList(null, 10, 0);
 
         Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         PurposeListResponse list = (PurposeListResponse) response.getEntity();
@@ -331,7 +331,7 @@ public class PurposesApiServiceImplTest {
     @Test
     public void testPurposesListWithDefaultPagination() {
 
-        Response response = purposesApiService.purposesList(null, null, null, null);
+        Response response = purposesApiService.purposesList(null, null, null);
 
         Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         Assert.assertNotNull(response.getEntity());
@@ -345,7 +345,7 @@ public class PurposesApiServiceImplTest {
         req.setType("UNIQUE_GROUP");
         purposesApiService.purposesCreate(req);
 
-        Response response = purposesApiService.purposesList("UNIQUE_GROUP", null, 10, 0);
+        Response response = purposesApiService.purposesList("type eq \"UNIQUE_GROUP\"", 10, 0);
 
         Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         PurposeListResponse list = (PurposeListResponse) response.getEntity();
@@ -375,7 +375,7 @@ public class PurposesApiServiceImplTest {
         gamma.setType("NF_GROUP_C_" + suffix);
         purposesApiService.purposesCreate(gamma);
 
-        Response response = purposesApiService.purposesList(null, "ALPHA", 10, 0);
+        Response response = purposesApiService.purposesList("name co \"ALPHA\"", 10, 0);
 
         Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         PurposeListResponse list = (PurposeListResponse) response.getEntity();
@@ -398,7 +398,7 @@ public class PurposesApiServiceImplTest {
         req.setVersion("v1.0");
         purposesApiService.purposesCreate(req);
 
-        Response response = purposesApiService.purposesList(null, null, 10, 0);
+        Response response = purposesApiService.purposesList(null, 10, 0);
 
         Assert.assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         PurposeListResponse list = (PurposeListResponse) response.getEntity();
