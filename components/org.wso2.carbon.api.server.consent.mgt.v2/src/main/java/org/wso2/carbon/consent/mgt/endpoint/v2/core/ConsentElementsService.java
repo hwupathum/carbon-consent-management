@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.consent.mgt.endpoint.v2.core;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.consent.mgt.core.ConsentManager;
@@ -60,7 +61,7 @@ public class ConsentElementsService {
      */
     public ElementDTO createElement(ElementCreateRequest request) throws ConsentManagementException {
 
-        String displayName = (request.getDisplayName() != null) ? request.getDisplayName() : request.getName();
+        String displayName = StringUtils.isNotBlank(request.getDisplayName()) ? request.getDisplayName() : request.getName();
         PIICategory piiCategory = new PIICategory(request.getName(), request.getDescription(), false, displayName);
         piiCategory.setTenantId(ConsentUtils.getTenantIdFromCarbonContext());
         PIICategory created = consentManager.addPIICategory(piiCategory);
@@ -125,7 +126,7 @@ public class ConsentElementsService {
     private ElementDTO toElementDTO(PIICategory cat) {
 
         ElementDTO dto = new ElementDTO();
-        if (cat.getUuid() != null) {
+        if (StringUtils.isNotBlank(cat.getUuid())) {
             dto.setElementId(UUID.fromString(cat.getUuid()));
         }
         dto.setName(cat.getName());

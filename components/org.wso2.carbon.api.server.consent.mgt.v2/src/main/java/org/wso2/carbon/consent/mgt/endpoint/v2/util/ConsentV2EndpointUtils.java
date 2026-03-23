@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.consent.mgt.endpoint.v2.util;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.slf4j.MDC;
 import org.wso2.carbon.consent.mgt.core.ConsentManager;
@@ -119,7 +120,7 @@ public class ConsentV2EndpointUtils {
     private static String getCorrelationId() {
 
         String correlationId = MDC.get(CORRELATION_ID_MDC);
-        return correlationId != null ? correlationId : UUID.randomUUID().toString();
+        return StringUtils.isNotBlank(correlationId) ? correlationId : UUID.randomUUID().toString();
     }
 
     /**

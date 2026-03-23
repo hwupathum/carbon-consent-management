@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.consent.mgt.endpoint.v2.core;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.consent.mgt.core.ConsentManager;
@@ -178,7 +179,7 @@ public class ConsentReceiptsService {
     public Response revokeConsent(String receiptId) throws ConsentManagementException {
 
         Receipt receipt = consentManager.getReceipt(receiptId);
-        String currentState = receipt.getState() != null ? receipt.getState() : ACTIVE_STATE;
+        String currentState = StringUtils.isNotBlank(receipt.getState()) ? receipt.getState() : ACTIVE_STATE;
         // Idempotent: already revoked is treated as success
         if (REVOKE_STATE.equals(currentState)) {
             return Response.noContent().build();
@@ -220,7 +221,7 @@ public class ConsentReceiptsService {
         receiptInput.setLanguage(request.getLanguage());
         boolean hasAuthorizations = request.getAuthorizations() != null && !request.getAuthorizations().isEmpty();
         String currentUser = carbonContext.getUsername();
-        String subjectId = (request.getSubjectId() != null && !request.getSubjectId().isEmpty())
+        String subjectId = StringUtils.isNotBlank(request.getSubjectId())
                 ? request.getSubjectId() : currentUser;
         // Delegated consent (subject ≠ caller) requires at least one authorizer.
         if (!subjectId.equals(currentUser) && !hasAuthorizations) {
@@ -303,10 +304,7 @@ public class ConsentReceiptsService {
         dto.setTimestamp(receipt.getConsentTimestamp());
         dto.setLanguage(receipt.getLanguage());
         dto.setSubjectId(receipt.getPiiPrincipalId());
-        String state = receipt.getState();
-        if (state == null) {
-            state = ACTIVE_STATE;
-        }
+        String state = StringUtils.isNotBlank(receipt.getState()) ? receipt.getState() : ACTIVE_STATE;
         dto.setState(ConsentDTO.StateEnum.fromValue(state));
         dto.setValidityTime(receipt.getValidityTime());
 
@@ -368,7 +366,7 @@ public class ConsentReceiptsService {
         // Resolve purpose int ID to UUID.
         try {
             Purpose purpose = consentManager.getPurpose(consentPurpose.getPurposeId());
-            if (purpose.getUuid() != null) {
+            if (StringUtils.isNotBlank(purpose.getUuid())) {
                 dto.setPurposeId(UUID.fromString(purpose.getUuid()));
             }
         } catch (ConsentManagementException e) {
@@ -377,7 +375,7 @@ public class ConsentReceiptsService {
 
         // purposeVersionId is already a UUID string from the DAO layer.
         String versionUuid = consentPurpose.getPurposeVersionId();
-        if (versionUuid != null) {
+        if (StringUtils.isNotBlank(versionUuid)) {
             dto.setPurposeVersionId(UUID.fromString(versionUuid));
         }
 
@@ -390,7 +388,7 @@ public class ConsentReceiptsService {
                 // Resolve element int ID to UUID.
                 try {
                     PIICategory element = consentManager.getPIICategory(piiCategoryValidity.getId());
-                    if (element.getUuid() != null) {
+                    if (StringUtils.isNotBlank(element.getUuid())) {
                         elementDTO.setElementId(UUID.fromString(element.getUuid()));
                     }
                 } catch (ConsentManagementException e) {
@@ -415,7 +413,7 @@ public class ConsentReceiptsService {
             throws ConsentManagementException {
 
         Receipt receipt = consentManager.getReceipt(consentId);
-        String currentState = receipt.getState() != null ? receipt.getState() : ACTIVE_STATE;
+        String currentState = StringUtils.isNotBlank(receipt.getState()) ? receipt.getState() : ACTIVE_STATE;
         if (!PENDING_STATE.equals(currentState)) {
             throw handleClientException(ERROR_CODE_CONSENT_INVALID_STATE_FOR_AUTHORIZE, consentId);
         }
@@ -476,10 +474,7 @@ public class ConsentReceiptsService {
         dto.setConsentId(receipt.getConsentReceiptId());
         dto.setLanguage(receipt.getLanguage());
         dto.setSubjectId(receipt.getPiiPrincipalId());
-        String state = receipt.getState();
-        if (state == null) {
-            state = "ACTIVE";
-        }
+        String state = StringUtils.isNotBlank(receipt.getState()) ? receipt.getState() : "ACTIVE";
         dto.setState(ConsentSummaryDTO.StateEnum.fromValue(state));
         dto.setServiceId(receipt.getSpDisplayName());
         dto.setValidityTime(receipt.getValidityTime());

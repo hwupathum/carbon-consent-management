@@ -18,6 +18,7 @@
 
 package org.wso2.carbon.consent.mgt.endpoint.v2.core;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.consent.mgt.core.ConsentManager;
@@ -124,7 +125,7 @@ public class ConsentPurposesService {
         List<PurposeSummaryDTO> items = new ArrayList<>();
         if (purposes != null) {
             for (Purpose p : purposes) {
-                if (p.getUuid() == null) {
+                if (StringUtils.isBlank(p.getUuid())) {
                     continue;
                 }
                 items.add(toPurposeSummaryDTO(p));
@@ -279,7 +280,7 @@ public class ConsentPurposesService {
         PurposeVersion latestVersion = purpose.getLatestVersion();
         if (latestVersion != null) {
             PurposeDTOLatestVersion lv = new PurposeDTOLatestVersion();
-            if (latestVersion.getUuid() != null) {
+            if (StringUtils.isNotBlank(latestVersion.getUuid())) {
                 lv.setVersionId(UUID.fromString(latestVersion.getUuid()));
             }
             lv.setVersion(latestVersion.getVersion());
@@ -299,7 +300,7 @@ public class ConsentPurposesService {
         PurposeVersion latestVersion = purpose.getLatestVersion();
         if (latestVersion != null) {
             PurposeDTOLatestVersion lv = new PurposeDTOLatestVersion();
-            if (latestVersion.getUuid() != null) {
+            if (StringUtils.isNotBlank(latestVersion.getUuid())) {
                 lv.setVersionId(UUID.fromString(latestVersion.getUuid()));
             }
             lv.setVersion(latestVersion.getVersion());
@@ -320,7 +321,7 @@ public class ConsentPurposesService {
     private PurposeVersionDTO toPurposeVersionDTO(PurposeVersion version) {
 
         PurposeVersionDTO dto = new PurposeVersionDTO();
-        if (version.getUuid() != null) {
+        if (StringUtils.isNotBlank(version.getUuid())) {
             dto.setVersionId(UUID.fromString(version.getUuid()));
         }
         dto.setVersion(version.getVersion());
