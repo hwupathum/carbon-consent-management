@@ -271,13 +271,11 @@ public class ConsentConstants {
         ERROR_CODE_INVALID_AUTHORIZATION_STATUS("CM_00122",
                 "Invalid authorization status: '%s'. Must be one of: APPROVED, REJECTED, REVOKED."),
         ERROR_CODE_INVALID_CURSOR_TOKEN("CM_00123", "Invalid cursor token: %s."),
-        ERROR_CODE_CONSENT_MULTIPLE_PURPOSES_NOT_ALLOWED("CM_00124",
-                "Only one purpose is allowed per consent unless the state is REJECTED."),
-        ERROR_CODE_UPDATE_PII_CATEGORY("CM_00125",
+        ERROR_CODE_UPDATE_PII_CATEGORY("CM_00124",
                 "Error occurred while updating UUID for PII category with ID: %s."),
-        ERROR_CODE_ORGANIZATION_TRAVERSAL("CM_00126",
+        ERROR_CODE_ORGANIZATION_TRAVERSAL("CM_00125",
                 "Error occurred while traversing organization hierarchy for tenant: %s."),
-        ERROR_CODE_RESOLVE_ORGANIZATION_ID("CM_00127",
+        ERROR_CODE_RESOLVE_ORGANIZATION_ID("CM_00126",
                 "Error occurred while resolving organization ID for tenant domain: %s.");
 
         private final String code;
