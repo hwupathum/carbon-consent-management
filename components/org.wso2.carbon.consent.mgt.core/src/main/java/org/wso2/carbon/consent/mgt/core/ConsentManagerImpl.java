@@ -51,6 +51,7 @@ import org.wso2.carbon.consent.mgt.core.util.ConsentUtils;
 import org.wso2.carbon.context.PrivilegedCarbonContext;
 import org.wso2.carbon.core.util.KeyStoreManager;
 import org.wso2.carbon.consent.mgt.core.internal.ConsentManagerComponentDataHolder;
+import org.wso2.carbon.identity.central.log.mgt.utils.LoggerUtils;
 import org.wso2.carbon.identity.organization.management.service.OrganizationManager;
 import org.wso2.carbon.identity.organization.management.service.exception.OrganizationManagementException;
 import org.wso2.carbon.identity.organization.management.service.util.OrganizationManagementUtil;
@@ -1228,7 +1229,9 @@ public class ConsentManagerImpl implements ConsentManager {
                         ? auths.stream().anyMatch(a -> userId.equals(a.getUserId()))
                         : auths.stream().anyMatch(a -> userId.equalsIgnoreCase(a.getUserId()));
                 if (!userInList) {
-                    throw handleClientException(ERROR_CODE_CONSENT_USER_NOT_IN_AUTHORIZATION_LIST, userId);
+                    String maskedUserId = LoggerUtils.isLogMaskingEnable
+                            ? LoggerUtils.getMaskedContent(userId) : userId;
+                    throw handleClientException(ERROR_CODE_CONSENT_USER_NOT_IN_AUTHORIZATION_LIST, maskedUserId);
                 }
             }
         }
@@ -1882,7 +1885,9 @@ public class ConsentManagerImpl implements ConsentManager {
                 log.debug("Error while reading user store property: " + USE_CASE_SENSITIVE_USERNAME_FOR_CACHE_KEYS
                         + ". Considering username as case sensitive.");
             }
-            throw handleServerException(ERROR_CODE_GETTING_USER_STORE_MANAGER, username, e);
+            String maskedUsername = LoggerUtils.isLogMaskingEnable
+                    ? LoggerUtils.getMaskedContent(username) : username;
+            throw handleServerException(ERROR_CODE_GETTING_USER_STORE_MANAGER, maskedUsername, e);
         }
         return false;
     }
