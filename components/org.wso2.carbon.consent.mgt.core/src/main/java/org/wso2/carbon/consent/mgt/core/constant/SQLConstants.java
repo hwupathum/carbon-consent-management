@@ -537,9 +537,22 @@ public class SQLConstants {
             "    LEFT JOIN CM_RECEIPT_SP_ASSOC rsa2 ON r2.CONSENT_RECEIPT_ID = rsa2.CONSENT_RECEIPT_ID " +
             "    LEFT JOIN CM_SP_PURPOSE_ASSOC spa ON rsa2.ID = spa.RECEIPT_SP_ASSOC " +
             "    LEFT JOIN CM_PURPOSE p ON spa.PURPOSE_ID = p.ID " +
-            "    WHERE r2.PRINCIPAL_TENANT_ID = ? " +
-            "    AND r2.PII_PRINCIPAL_ID LIKE ? AND rsa2.SP_NAME LIKE ? AND r2.STATE LIKE ? " +
-            "    AND p.UUID LIKE ? AND COALESCE(spa.PURPOSE_VERSION_ID, '') LIKE ?";
+            "    WHERE r2.PRINCIPAL_TENANT_ID = ?";
+
+    public static final String LIST_RECEIPTS_SUBJECT_CONDITION =
+            " AND r2.PII_PRINCIPAL_ID = ?";
+
+    public static final String LIST_RECEIPTS_SERVICE_CONDITION =
+            " AND rsa2.SP_NAME = ?";
+
+    public static final String LIST_RECEIPTS_STATE_CONDITION =
+            " AND r2.STATE = ?";
+
+    public static final String LIST_RECEIPTS_PURPOSE_CONDITION =
+            " AND p.UUID = ?";
+
+    public static final String LIST_RECEIPTS_PURPOSE_VERSION_CONDITION =
+            " AND spa.PURPOSE_VERSION_ID = ?";
 
     public static final String LIST_RECEIPTS_ACTIVE_EXPIRY_CONDITION =
             " AND (r2.EXPIRY_TIME IS NULL OR r2.EXPIRY_TIME > ?)";

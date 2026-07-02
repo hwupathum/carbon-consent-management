@@ -44,7 +44,8 @@ import org.wso2.carbon.identity.core.model.ExpressionNode;
 import java.util.List;
 import java.util.Map;
 
-import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.*;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.GROUP;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.GROUP_TYPE;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.POST_ADD_PII_CATEGORY;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.POST_ADD_PURPOSE;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.POST_ADD_PURPOSE_CATEGORY;
@@ -115,6 +116,31 @@ import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.Interce
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.PRE_SET_LATEST_PURPOSE_VERSION;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.PRE_UPDATE_CONSENT;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.InterceptorConstants.PRE_VALIDATE_CONSENT_STATUS;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.LIMIT;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.OFFSET;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PII_CATEGORY;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PII_CATEGORY_ID;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PII_CATEGORY_NAME;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PII_CATEGORY_UUID;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PII_PRINCIPAL_ID;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PRINCIPAL_TENANT_DOMAIN;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PURPOSE;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PURPOSE_CATEGORY;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PURPOSE_CATEGORY_ID;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PURPOSE_CATEGORY_NAME;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PURPOSE_ID;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PURPOSE_NAME;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PURPOSE_UUID;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PURPOSE_VERSION_LABEL;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.RECEIPT_ID;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.RECEIPT_UPDATE_INPUT;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.RECEIPT_INPUT;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.REVOKE_STATE;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.SERVICE;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.SP_TENANT_DOMAIN;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.STATE;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.TENANT_ID;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.VERSION_ID;
 
 /**
  * Consent Manager intercepting layer responsible for triggering listeners and calling the actual
