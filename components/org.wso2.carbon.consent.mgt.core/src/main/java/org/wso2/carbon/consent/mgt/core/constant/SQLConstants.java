@@ -544,6 +544,11 @@ public class SQLConstants {
     public static final String LIST_RECEIPTS_ACTIVE_EXPIRY_CONDITION =
             " AND (r2.EXPIRY_TIME IS NULL OR r2.EXPIRY_TIME > ?)";
 
+    // EXPIRED is computed lazily (never persisted); a receipt is expired when it is stored as
+    // ACTIVE/PENDING and its expiry time has passed. Mirrors resolveConsentState() in ConsentManagerImpl.
+    public static final String LIST_RECEIPTS_EXPIRED_CONDITION =
+            " AND r2.STATE IN ('ACTIVE', 'PENDING') AND r2.EXPIRY_TIME IS NOT NULL AND r2.EXPIRY_TIME <= ?";
+
     public static final String LIST_RECEIPTS_SQL_TAIL =
             " ORDER BY sub_ck ASC LIMIT ?" +
             "  ) inner_receipts" +
