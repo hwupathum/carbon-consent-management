@@ -1534,7 +1534,7 @@ public class ReceiptDAOImpl implements ReceiptDAO {
                         if (serviceId != null) {
                             preparedStatement.setString(paramIndex++, serviceId);
                         }
-                        if (state != null) {
+                        if (state != null && !EXPIRED_STATE.equals(state)) {
                             preparedStatement.setString(paramIndex++, state);
                         }
                         // The active/pending and expired expiry conditions compare EXPIRY_TIME against "now" in UTC.
@@ -1586,11 +1586,12 @@ public class ReceiptDAOImpl implements ReceiptDAO {
         if (serviceId != null) {
             propertyConditions.append(LIST_RECEIPTS_SERVICE_CONDITION);
         }
-        if (state != null) {
+        // EXPIRED is derived, not persisted; a direct STATE = 'EXPIRED' match would contradict the
+        // expiry clause below and return zero rows.
+        if (state != null && !EXPIRED_STATE.equals(state)) {
             propertyConditions.append(LIST_RECEIPTS_STATE_CONDITION);
         }
-        // ACTIVE and PENDING are both lazily re-labelled to EXPIRED once their expiry passes
-        // (see resolveConsentState in ConsentManagerImpl), so both must exclude expired rows.
+        // ACTIVE/PENDING are lazily re-labelled EXPIRED once expiry passes, so both exclude expired rows.
         if (ACTIVE_STATE.equals(state) || PENDING_STATE.equals(state)) {
             propertyConditions.append(LIST_RECEIPTS_ACTIVE_EXPIRY_CONDITION);
         } else if (EXPIRED_STATE.equals(state)) {

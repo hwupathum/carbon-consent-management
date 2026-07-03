@@ -607,6 +607,46 @@ public class ReceiptDAOImplTest {
     }
 
     @Test
+    public void testListReceipts_expiredStateFilter_derivesFromExpiredActiveRows() throws Exception {
+
+        DataSource dataSource = mock(DataSource.class);
+
+        try (MockedStatic<ConsentManagerComponentDataHolder> dataHolderMockedStatic = mockComponentDataHolder(dataSource);
+             Connection connection = getConnection()) {
+
+            Connection spy = spyConnection(connection);
+            when(dataSource.getConnection()).thenReturn(spy);
+
+            ReceiptDAO receiptDAO = new ReceiptDAOImpl();
+
+            // Non-expired: stored ACTIVE with no expiry time.
+            receiptDAO.addReceipt(receiptInputs.get(0));
+
+            // Expired: stored ACTIVE (EXPIRED is never persisted) with an expiry time in the past.
+            ReceiptInput expiredInput = cloneReceiptInput(receiptInputs.get(0));
+            expiredInput.setConsentReceiptId(UUID.randomUUID().toString());
+            expiredInput.setPiiPrincipalId("expired-subject");
+            expiredInput.setState(ConsentConstants.ACTIVE_STATE);
+            expiredInput.setExpiryTime(new java.sql.Timestamp(System.currentTimeMillis() - 86400000L));
+            receiptDAO.addReceipt(expiredInput);
+
+            // EXPIRED filter must derive the expired row from ACTIVE/PENDING rows whose expiry has passed.
+            List<Receipt> expired = receiptDAO.listReceipts(null, null, ConsentConstants.EXPIRED_STATE, null, null,
+                    10, SUPER_TENANT_ID, Collections.emptyList());
+            Assert.assertEquals(expired.size(), 1, "EXPIRED filter must return the one expired receipt");
+            Assert.assertEquals(expired.get(0).getPiiPrincipalId(), "expired-subject",
+                    "EXPIRED filter must return the receipt whose expiry has passed");
+
+            // ACTIVE filter must exclude the expired row.
+            List<Receipt> active = receiptDAO.listReceipts(null, null, ConsentConstants.ACTIVE_STATE, null, null,
+                    10, SUPER_TENANT_ID, Collections.emptyList());
+            Assert.assertEquals(active.size(), 1, "ACTIVE filter must exclude the expired receipt");
+            Assert.assertEquals(active.get(0).getPiiPrincipalId(), "subject1",
+                    "ACTIVE filter must return only the non-expired receipt");
+        }
+    }
+
+    @Test
     public void testInsertConsentAuthorization_withType_typeStored() throws Exception {
 
         DataSource dataSource = mock(DataSource.class);
