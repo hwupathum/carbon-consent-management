@@ -60,6 +60,8 @@ import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.FilterC
 import static java.time.ZoneOffset.UTC;
 import static org.apache.commons.collections.CollectionUtils.isNotEmpty;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ACTIVE_STATE;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.EXPIRED_STATE;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PENDING_STATE;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.REVOKE_STATE;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.DELETE_RECEIPTS_BY_PRINCIPAL_TENANT_ID_SQL;
@@ -116,6 +118,7 @@ import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECE
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_SQL_WITHOUT_SP_TENANT_MSSQL;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_SQL_WITHOUT_SP_TENANT_ORACLE;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_RECEIPTS_ACTIVE_EXPIRY_CONDITION;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_RECEIPTS_EXPIRED_CONDITION;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_RECEIPTS_SQL_HEAD;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_RECEIPTS_SQL_TAIL;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_RECEIPTS_SQL_TAIL_MSSQL;
@@ -1534,11 +1537,15 @@ public class ReceiptDAOImpl implements ReceiptDAO {
                         preparedStatement.setInt(paramIndex++, tenantId);
                         preparedStatement.setString(paramIndex++, finalSubjectId);
                         preparedStatement.setString(paramIndex++, finalServiceId);
-                        preparedStatement.setString(paramIndex++, finalState);
+                        // EXPIRED is computed lazily and never stored, so the STATE LIKE filter must match any
+                        // stored state; the appended expired condition constrains STATE to ACTIVE/PENDING itself.
+                        preparedStatement.setString(paramIndex++,
+                                EXPIRED_STATE.equals(finalState) ? SQL_FILTER_STRING_ANY : finalState);
                         preparedStatement.setString(paramIndex++, finalPurposeId);
                         preparedStatement.setString(paramIndex++, finalPurposeVersionId);
-                        // The active-expiry condition compares EXPIRY_TIME against "now" in UTC.
-                        if (ACTIVE_STATE.equals(finalState)) {
+                        // The active/pending and expired expiry conditions compare EXPIRY_TIME against "now" in UTC.
+                        if (ACTIVE_STATE.equals(finalState) || PENDING_STATE.equals(finalState)
+                                || EXPIRED_STATE.equals(finalState)) {
                             preparedStatement.setTimestamp(paramIndex++, new Timestamp(System.currentTimeMillis()),
                                     Calendar.getInstance(TimeZone.getTimeZone(UTC)));
                         }
@@ -1572,8 +1579,12 @@ public class ReceiptDAOImpl implements ReceiptDAO {
         int propIndex = 0;
         String valueCol = getReceiptPropertyValueColumn();
 
-        if (ACTIVE_STATE.equals(state)) {
+        // ACTIVE and PENDING are both lazily re-labelled to EXPIRED once their expiry passes
+        // (see resolveConsentState in ConsentManagerImpl), so both must exclude expired rows.
+        if (ACTIVE_STATE.equals(state) || PENDING_STATE.equals(state)) {
             propertyConditions.append(LIST_RECEIPTS_ACTIVE_EXPIRY_CONDITION);
+        } else if (EXPIRED_STATE.equals(state)) {
+            propertyConditions.append(LIST_RECEIPTS_EXPIRED_CONDITION);
         }
 
         for (ExpressionNode node : expressionNodes) {
