@@ -119,6 +119,11 @@ import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECE
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.SEARCH_RECEIPT_SQL_WITHOUT_SP_TENANT_ORACLE;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_RECEIPTS_ACTIVE_EXPIRY_CONDITION;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_RECEIPTS_EXPIRED_CONDITION;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_RECEIPTS_PURPOSE_CONDITION;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_RECEIPTS_PURPOSE_VERSION_CONDITION;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_RECEIPTS_SERVICE_CONDITION;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_RECEIPTS_STATE_CONDITION;
+import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_RECEIPTS_SUBJECT_CONDITION;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_RECEIPTS_SQL_HEAD;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_RECEIPTS_SQL_TAIL;
 import static org.wso2.carbon.consent.mgt.core.constant.SQLConstants.LIST_RECEIPTS_SQL_TAIL_MSSQL;
@@ -365,11 +370,7 @@ public class ReceiptDAOImpl implements ReceiptDAO {
             } else if (piiPrincipalId.contains(QUERY_FILTER_STRING_ANY)) {
                 piiPrincipalId = piiPrincipalId.replaceAll(QUERY_FILTER_STRING_ANY_ESCAPED, SQL_FILTER_STRING_ANY);
             } else {
-                // Escape SQL LIKE wildcard characters so the username is matched literally across all databases.
-                // Uses '!' as the escape character, which is supported by all DB engines including PostgreSQL.
-                piiPrincipalId = piiPrincipalId.replace("!", "!!")
-                                               .replace("%", "!%")
-                                               .replace("_", "!_");
+                piiPrincipalId = FilterQueriesUtil.escapeLikeWildcards(piiPrincipalId);
             }
 
             if (service == null) {
@@ -377,9 +378,7 @@ public class ReceiptDAOImpl implements ReceiptDAO {
             } else if (service.contains(QUERY_FILTER_STRING_ANY)) {
                 service = service.replaceAll(QUERY_FILTER_STRING_ANY_ESCAPED, SQL_FILTER_STRING_ANY);
             } else {
-                service = service.replace("!", "!!")
-                                 .replace("%", "!%")
-                                 .replace("_", "!_");
+                service = FilterQueriesUtil.escapeLikeWildcards(service);
             }
 
             if (state == null) {
@@ -1476,12 +1475,6 @@ public class ReceiptDAOImpl implements ReceiptDAO {
         JdbcTemplate jdbcTemplate = JdbcUtils.getNewTemplate();
         List<Receipt> receipts;
 
-        final String finalSubjectId = subjectId != null ? subjectId : SQL_FILTER_STRING_ANY;
-        final String finalServiceId = serviceId != null ? serviceId : SQL_FILTER_STRING_ANY;
-        final String finalState = state != null ? state : SQL_FILTER_STRING_ANY;
-        final String finalPurposeId = purposeId != null ? purposeId : SQL_FILTER_STRING_ANY;
-        final String finalPurposeVersionId = purposeVersionId != null ? purposeVersionId : SQL_FILTER_STRING_ANY;
-
         final List<ExpressionNode> nodes =
                 (expressionNodes != null) ? expressionNodes : java.util.Collections.emptyList();
 
@@ -1505,7 +1498,7 @@ public class ReceiptDAOImpl implements ReceiptDAO {
         final boolean finalHasCursor = hasCursor;
 
         try {
-            String query = buildCursorReceiptQuery(nodes, finalState);
+            String query = buildCursorReceiptQuery(nodes, subjectId, serviceId, state, purposeId, purposeVersionId);
             receipts = jdbcTemplate.executeQuery(query,
                     (resultSet, rowNumber) -> {
                         Receipt receipt = new Receipt();
@@ -1535,19 +1528,26 @@ public class ReceiptDAOImpl implements ReceiptDAO {
                         int paramIndex = 1;
                         preparedStatement.setInt(paramIndex++, tenantId);
                         preparedStatement.setInt(paramIndex++, tenantId);
-                        preparedStatement.setString(paramIndex++, finalSubjectId);
-                        preparedStatement.setString(paramIndex++, finalServiceId);
-                        // EXPIRED is computed lazily and never stored, so the STATE LIKE filter must match any
-                        // stored state; the appended expired condition constrains STATE to ACTIVE/PENDING itself.
-                        preparedStatement.setString(paramIndex++,
-                                EXPIRED_STATE.equals(finalState) ? SQL_FILTER_STRING_ANY : finalState);
-                        preparedStatement.setString(paramIndex++, finalPurposeId);
-                        preparedStatement.setString(paramIndex++, finalPurposeVersionId);
+                        if (subjectId != null) {
+                            preparedStatement.setString(paramIndex++, subjectId);
+                        }
+                        if (serviceId != null) {
+                            preparedStatement.setString(paramIndex++, serviceId);
+                        }
+                        if (state != null && !EXPIRED_STATE.equals(state)) {
+                            preparedStatement.setString(paramIndex++, state);
+                        }
                         // The active/pending and expired expiry conditions compare EXPIRY_TIME against "now" in UTC.
-                        if (ACTIVE_STATE.equals(finalState) || PENDING_STATE.equals(finalState)
-                                || EXPIRED_STATE.equals(finalState)) {
+                        if (ACTIVE_STATE.equals(state) || PENDING_STATE.equals(state)
+                                || EXPIRED_STATE.equals(state)) {
                             preparedStatement.setTimestamp(paramIndex++, new Timestamp(System.currentTimeMillis()),
                                     Calendar.getInstance(TimeZone.getTimeZone(UTC)));
+                        }
+                        if (purposeId != null) {
+                            preparedStatement.setString(paramIndex++, purposeId);
+                        }
+                        if (purposeVersionId != null) {
+                            preparedStatement.setString(paramIndex++, purposeVersionId);
                         }
                         for (ExpressionNode node : nodes) {
                             String attr = node.getAttributeValue();
@@ -1570,7 +1570,8 @@ public class ReceiptDAOImpl implements ReceiptDAO {
         return receipts;
     }
 
-    private String buildCursorReceiptQuery(List<ExpressionNode> expressionNodes, String state)
+    private String buildCursorReceiptQuery(List<ExpressionNode> expressionNodes, String subjectId,
+                                           String serviceId, String state, String purposeId, String purposeVersionId)
             throws DataAccessException {
 
         StringBuilder propertyConditions = new StringBuilder();
@@ -1579,12 +1580,28 @@ public class ReceiptDAOImpl implements ReceiptDAO {
         int propIndex = 0;
         String valueCol = getReceiptPropertyValueColumn();
 
-        // ACTIVE and PENDING are both lazily re-labelled to EXPIRED once their expiry passes
-        // (see resolveConsentState in ConsentManagerImpl), so both must exclude expired rows.
+        if (subjectId != null) {
+            propertyConditions.append(LIST_RECEIPTS_SUBJECT_CONDITION);
+        }
+        if (serviceId != null) {
+            propertyConditions.append(LIST_RECEIPTS_SERVICE_CONDITION);
+        }
+        // EXPIRED is derived, not persisted; a direct STATE = 'EXPIRED' match would contradict the
+        // expiry clause below and return zero rows.
+        if (state != null && !EXPIRED_STATE.equals(state)) {
+            propertyConditions.append(LIST_RECEIPTS_STATE_CONDITION);
+        }
+        // ACTIVE/PENDING are lazily re-labelled EXPIRED once expiry passes, so both exclude expired rows.
         if (ACTIVE_STATE.equals(state) || PENDING_STATE.equals(state)) {
             propertyConditions.append(LIST_RECEIPTS_ACTIVE_EXPIRY_CONDITION);
         } else if (EXPIRED_STATE.equals(state)) {
             propertyConditions.append(LIST_RECEIPTS_EXPIRED_CONDITION);
+        }
+        if (purposeId != null) {
+            propertyConditions.append(LIST_RECEIPTS_PURPOSE_CONDITION);
+        }
+        if (purposeVersionId != null) {
+            propertyConditions.append(LIST_RECEIPTS_PURPOSE_VERSION_CONDITION);
         }
 
         for (ExpressionNode node : expressionNodes) {
@@ -1595,13 +1612,18 @@ public class ReceiptDAOImpl implements ReceiptDAO {
                 cursorCondition = " AND r2.CURSOR_KEY < ?";
                 isBefore = true;
             } else if (attr != null && attr.startsWith("properties.")) {
+                String sqlOp = FilterQueriesUtil.toSqlOperator(node.getOperation());
                 propertyConditions.append(" AND EXISTS (SELECT 1 FROM CM_CONSENT_RECEIPT_PROPERTY prop_f")
                         .append(propIndex)
                         .append(" WHERE prop_f").append(propIndex)
                         .append(".CONSENT_RECEIPT_ID = r2.CONSENT_RECEIPT_ID")
                         .append(" AND prop_f").append(propIndex).append(".NAME = ?")
                         .append(" AND prop_f").append(propIndex).append(".").append(valueCol)
-                        .append(" ").append(FilterQueriesUtil.toSqlOperator(node.getOperation())).append(" ?)");
+                        .append(" ").append(sqlOp).append(" ?");
+                if ("LIKE".equals(sqlOp)) {
+                    propertyConditions.append(" ESCAPE '!'");
+                }
+                propertyConditions.append(")");
                 propIndex++;
             }
         }

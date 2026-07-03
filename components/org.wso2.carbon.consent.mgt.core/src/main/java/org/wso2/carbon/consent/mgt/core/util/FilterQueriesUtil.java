@@ -135,7 +135,11 @@ public class FilterQueriesUtil {
                         ERROR_CODE_UNSUPPORTED_FILTER_ATTRIBUTE.getCode());
             }
 
-            filterQuery.append(" AND ").append(column).append(" ").append(toSqlOperator(op)).append(" ?");
+            String sqlOperator = toSqlOperator(op);
+            filterQuery.append(" AND ").append(column).append(" ").append(sqlOperator).append(" ?");
+            if (SQL_OP_LIKE.equals(sqlOperator)) {
+                filterQuery.append(" ESCAPE '!'");
+            }
             queryBuilder.setFilterAttributeValue(++paramCount, toSqlValue(op, value));
         }
 
@@ -179,10 +183,24 @@ public class FilterQueriesUtil {
             return value;
         }
         switch (op.toLowerCase()) {
-            case OP_SW: return value + LIKE_WILDCARD_END;
-            case OP_CO: return LIKE_WILDCARD_START + value + LIKE_WILDCARD_END;
-            case OP_EW: return LIKE_WILDCARD_START + value;
+            case OP_SW: return escapeLikeWildcards(value) + LIKE_WILDCARD_END;
+            case OP_CO: return LIKE_WILDCARD_START + escapeLikeWildcards(value) + LIKE_WILDCARD_END;
+            case OP_EW: return LIKE_WILDCARD_START + escapeLikeWildcards(value);
             default: return value;
         }
+    }
+
+    /**
+     * Escapes SQL LIKE wildcard characters so the value is matched literally across all databases.
+     * Uses '!' as the escape character, which is supported by all DB engines including PostgreSQL.
+     *
+     * @param value the raw filter value to escape.
+     * @return the escaped string safe for use in a LIKE clause with ESCAPE '!'.
+     */
+    public static String escapeLikeWildcards(String value) {
+
+        return value.replace("!", "!!")
+                    .replace("%", "!%")
+                    .replace("_", "!_");
     }
 }

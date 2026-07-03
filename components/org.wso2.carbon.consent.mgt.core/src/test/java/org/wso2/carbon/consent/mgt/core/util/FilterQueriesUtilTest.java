@@ -74,6 +74,13 @@ public class FilterQueriesUtilTest {
                 {"ne", "EU", "EU"},          // non-LIKE operators leave the value untouched
                 {null, "EU", "EU"},          // null operator → unchanged
                 {"co", null, null},          // null value → unchanged (no NPE)
+                // LIKE operators escape wildcard metacharacters in the user value so it is matched
+                // literally; the surrounding wildcards added by the operator itself stay active.
+                {"co", "50%", "%50!%%"},      // '%' in the value is escaped, framing '%' preserved
+                {"sw", "a_b", "a!_b%"},       // '_' escaped, trailing '%' preserved
+                {"ew", "x!y", "%x!!y"},       // existing escape char '!' is itself escaped
+                {"co", "%_!", "%!%!_!!%"},    // all three metacharacters together
+                {"eq", "50%", "50%"},         // equality never escapes (no LIKE, no wildcard meaning)
         };
     }
 
@@ -82,5 +89,28 @@ public class FilterQueriesUtilTest {
 
         Assert.assertEquals(FilterQueriesUtil.toSqlValue(op, value), expected,
                 "Unexpected SQL value for operation '" + op + "' and value '" + value + "'");
+    }
+
+    @DataProvider(name = "escapeProvider")
+    public Object[][] escapeProvider() {
+
+        return new Object[][]{
+                // raw value, expected escaped value (for use with ESCAPE '!')
+                {"plain", "plain"},                 // nothing to escape
+                {"", ""},                           // empty string
+                {"100%", "100!%"},                  // percent
+                {"a_b", "a!_b"},                    // underscore
+                {"a!b", "a!!b"},                    // escape character itself
+                {"%_!", "!%!_!!"},                  // all metacharacters
+                // '!' must be escaped first so an already-escaped '%'/'_' is not double-escaped.
+                {"!%", "!!!%"},
+        };
+    }
+
+    @Test(dataProvider = "escapeProvider")
+    public void testEscapeLikeWildcards(String value, String expected) {
+
+        Assert.assertEquals(FilterQueriesUtil.escapeLikeWildcards(value), expected,
+                "Unexpected escaped value for input '" + value + "'");
     }
 }
