@@ -142,6 +142,7 @@ import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMe
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_TENANT_ID_REQUIRED;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_TERMINATION_IS_REQUIRED;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_THIRD_PARTY_DISCLOSURE_IS_REQUIRED;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_USER_NOT_AUTHORIZED;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PIIControllerElements.ADDRESS;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PIIControllerElements.ADDRESS_COUNTRY;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PIIControllerElements.ADDRESS_LOCALITY;
@@ -808,6 +809,18 @@ public class ConsentManagerImpl implements ConsentManager {
         return receipt;
     }
 
+    @Override
+    public Receipt getReceiptWithExtendedSchema(String receiptId, String piiPrincipalId)
+            throws ConsentManagementException {
+
+        Receipt receipt = getReceiptWithExtendedSchema(receiptId);
+
+        if (!isSamePrincipal(piiPrincipalId, receipt.getPiiPrincipalId())) {
+            throw handleClientException(ERROR_CODE_USER_NOT_AUTHORIZED, piiPrincipalId);
+        }
+        return receipt;
+    }
+
     /**
      * This API is used to search receipts.
      *
@@ -1291,6 +1304,35 @@ public class ConsentManagerImpl implements ConsentManager {
             throws ConsentManagementException {
 
         return getReceiptsDAO(receiptDAOs).getConsentAuthorizations(consentId);
+    }
+
+    /**
+     * Retrieves all authorization records for a consent receipt, after validating that the given PII principal
+     * is either the owner of the receipt or a delegated authorizer on it.
+     *
+     * @param consentId      Consent receipt ID.
+     * @param piiPrincipalId PII principal ID expected to own or be authorized on the receipt.
+     * @return List of authorization records for the consent.
+     * @throws ConsentManagementException if the PII principal is neither the owner nor a delegated authorizer.
+     */
+    @Override
+    public List<ConsentAuthorization> getConsentAuthorizations(String consentId, String piiPrincipalId)
+            throws ConsentManagementException {
+
+        Receipt receipt = getReceiptWithExtendedSchema(consentId);
+        List<ConsentAuthorization> authorizations = getConsentAuthorizations(consentId);
+
+        if (isSamePrincipal(piiPrincipalId, receipt.getPiiPrincipalId())) {
+            return authorizations;
+        }
+        if (authorizations != null) {
+            for (ConsentAuthorization authorization : authorizations) {
+                if (isSamePrincipal(piiPrincipalId, authorization.getUserId())) {
+                    return authorizations;
+                }
+            }
+        }
+        throw handleClientException(ERROR_CODE_USER_NOT_AUTHORIZED, piiPrincipalId);
     }
 
     @Override
@@ -2000,6 +2042,22 @@ public class ConsentManagerImpl implements ConsentManager {
         } else {
             return null;
         }
+    }
+
+    /**
+     * Checks whether the given PII principal ID refers to the same user as the other username, honouring the
+     * case-sensitivity configuration of the PII principal's userstore.
+     *
+     * @param piiPrincipalId PII principal ID to check.
+     * @param otherUserId    Other username to compare against.
+     * @return true if both refer to the same user.
+     * @throws ConsentManagementException if the userstore case-sensitivity cannot be resolved.
+     */
+    private boolean isSamePrincipal(String piiPrincipalId, String otherUserId) throws ConsentManagementException {
+
+        return isUserNameCaseSensitive(piiPrincipalId)
+                ? StringUtils.equals(piiPrincipalId, otherUserId)
+                : StringUtils.equalsIgnoreCase(getLowerCaseUserName(piiPrincipalId), otherUserId);
     }
 
     /**
