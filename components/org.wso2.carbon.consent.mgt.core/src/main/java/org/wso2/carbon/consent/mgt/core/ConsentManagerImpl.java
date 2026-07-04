@@ -815,7 +815,7 @@ public class ConsentManagerImpl implements ConsentManager {
 
         Receipt receipt = getReceiptWithExtendedSchema(receiptId);
 
-        if (!isSamePrincipal(piiPrincipalId, receipt.getPiiPrincipalId())) {
+        if (!isSameUser(piiPrincipalId, receipt.getPiiPrincipalId())) {
             throw handleClientException(ERROR_CODE_USER_NOT_AUTHORIZED, piiPrincipalId);
         }
         return receipt;
@@ -1307,32 +1307,32 @@ public class ConsentManagerImpl implements ConsentManager {
     }
 
     /**
-     * Retrieves all authorization records for a consent receipt, after validating that the given PII principal
-     * is either the owner of the receipt or a delegated authorizer on it.
+     * Retrieves all authorization records for a consent receipt, after validating that the given user is either
+     * the subject of the receipt or a delegated authorizer on it.
      *
-     * @param consentId      Consent receipt ID.
-     * @param piiPrincipalId PII principal ID expected to own or be authorized on the receipt.
+     * @param consentId Consent receipt ID.
+     * @param userId    ID of the user expected to be the subject or an authorizer on the receipt.
      * @return List of authorization records for the consent.
-     * @throws ConsentManagementException if the PII principal is neither the owner nor a delegated authorizer.
+     * @throws ConsentManagementException if the user is neither the subject nor a delegated authorizer.
      */
     @Override
-    public List<ConsentAuthorization> getConsentAuthorizations(String consentId, String piiPrincipalId)
+    public List<ConsentAuthorization> getConsentAuthorizations(String consentId, String userId)
             throws ConsentManagementException {
 
         Receipt receipt = getReceiptWithExtendedSchema(consentId);
         List<ConsentAuthorization> authorizations = getConsentAuthorizations(consentId);
 
-        if (isSamePrincipal(piiPrincipalId, receipt.getPiiPrincipalId())) {
+        if (isSameUser(userId, receipt.getPiiPrincipalId())) {
             return authorizations;
         }
         if (authorizations != null) {
             for (ConsentAuthorization authorization : authorizations) {
-                if (isSamePrincipal(piiPrincipalId, authorization.getUserId())) {
+                if (isSameUser(userId, authorization.getUserId())) {
                     return authorizations;
                 }
             }
         }
-        throw handleClientException(ERROR_CODE_USER_NOT_AUTHORIZED, piiPrincipalId);
+        throw handleClientException(ERROR_CODE_USER_NOT_AUTHORIZED, userId);
     }
 
     @Override
@@ -2045,19 +2045,19 @@ public class ConsentManagerImpl implements ConsentManager {
     }
 
     /**
-     * Checks whether the given PII principal ID refers to the same user as the other username, honouring the
-     * case-sensitivity configuration of the PII principal's userstore.
+     * Checks whether the given user ID refers to the same user as the other username, honouring the
+     * case-sensitivity configuration of the userstore.
      *
-     * @param piiPrincipalId PII principal ID to check.
-     * @param otherUserId    Other username to compare against.
+     * @param userId      User ID to check.
+     * @param otherUserId Other username to compare against.
      * @return true if both refer to the same user.
      * @throws ConsentManagementException if the userstore case-sensitivity cannot be resolved.
      */
-    private boolean isSamePrincipal(String piiPrincipalId, String otherUserId) throws ConsentManagementException {
+    private boolean isSameUser(String userId, String otherUserId) throws ConsentManagementException {
 
-        return isUserNameCaseSensitive(piiPrincipalId)
-                ? StringUtils.equals(piiPrincipalId, otherUserId)
-                : StringUtils.equalsIgnoreCase(getLowerCaseUserName(piiPrincipalId), otherUserId);
+        return isUserNameCaseSensitive(userId)
+                ? StringUtils.equals(userId, otherUserId)
+                : StringUtils.equalsIgnoreCase(userId, otherUserId);
     }
 
     /**

@@ -492,15 +492,15 @@ public interface ConsentManager {
     }
 
     /**
-     * Get all authorization records for a consent (V2 API), after validating that the given PII principal is
-     * either the owner of the receipt or a delegated authorizer on it. Falls back to
+     * Get all authorization records for a consent (V2 API), after validating that the given user is either the
+     * subject of the receipt or a delegated authorizer on it. Falls back to
      * {@link #getConsentAuthorizations(String)} (no ownership/authorizer check) for implementations that do not
      * override.
      *
-     * @param consentId      Consent receipt ID.
-     * @param piiPrincipalId PII principal ID expected to own or be authorized on the receipt.
+     * @param consentId Consent receipt ID.
+     * @param userId    ID of the user expected to be the subject or an authorizer on the receipt.
      */
-    default List<ConsentAuthorization> getConsentAuthorizations(String consentId, String piiPrincipalId)
+    default List<ConsentAuthorization> getConsentAuthorizations(String consentId, String userId)
             throws ConsentManagementException {
 
         return getConsentAuthorizations(consentId);

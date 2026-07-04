@@ -1364,10 +1364,10 @@ public class PrivilegedConsentManagerImpl implements PrivilegedConsentManager {
     }
 
     @Override
-    public List<ConsentAuthorization> getConsentAuthorizations(String consentId, String piiPrincipalId)
+    public List<ConsentAuthorization> getConsentAuthorizations(String consentId, String userId)
             throws ConsentManagementException {
 
-        return consentManager.getConsentAuthorizations(consentId, piiPrincipalId);
+        return consentManager.getConsentAuthorizations(consentId, userId);
     }
 
     @Override
