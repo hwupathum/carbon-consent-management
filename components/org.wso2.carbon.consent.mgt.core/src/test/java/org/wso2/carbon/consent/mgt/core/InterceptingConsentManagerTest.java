@@ -875,6 +875,48 @@ public class InterceptingConsentManagerTest {
         Assert.assertEquals(receipt.getState(), REVOKE_STATE);
     }
 
+    @Test
+    public void testGetReceiptWithExtendedSchemaOwnerCheck() throws Exception {
+
+        String consentId = addV2ReceiptDirectly("subject1", SUPER_TENANT_ID, SUPER_TENANT_DOMAIN_NAME);
+
+        Receipt receipt = consentManager.getReceiptWithExtendedSchema(consentId, "subject1");
+
+        Assert.assertEquals(receipt.getConsentReceiptId(), consentId);
+    }
+
+    @Test(expectedExceptions = ConsentManagementClientException.class)
+    public void testGetReceiptWithExtendedSchemaOwnerCheck_differentUser_throws() throws Exception {
+
+        String consentId = addV2ReceiptDirectly("subject1", SUPER_TENANT_ID, SUPER_TENANT_DOMAIN_NAME);
+
+        consentManager.getReceiptWithExtendedSchema(consentId, "someoneElse");
+        Assert.assertTrue(false, "Expected: " + ConsentManagementClientException.class.getName());
+    }
+
+    private String addV2ReceiptDirectly(String piiPrincipalId, int tenantId, String tenantDomain) throws Exception {
+
+        String consentId = java.util.UUID.randomUUID().toString();
+        ReceiptInput receiptInput = new ReceiptInput();
+        receiptInput.setConsentReceiptId(consentId);
+        receiptInput.setPiiPrincipalId(piiPrincipalId);
+        receiptInput.setTenantId(tenantId);
+        receiptInput.setTenantDomain(tenantDomain);
+        receiptInput.setState(org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ACTIVE_STATE);
+        receiptInput.setCollectionMethod("V2");
+        receiptInput.setLanguage("EN");
+        receiptInput.setVersion("KI-CR-v1.1.0");
+        receiptInput.setJurisdiction("LK");
+        receiptInput.setPolicyUrl("http://test.com/policy");
+        receiptInput.setPiiControllerInfo("{\"piiController\":\"test\",\"contact\":\"test\",\"Address\":"
+                + "{\"addressCountry\":\"LK\",\"addressLocality\":\"Colombo\",\"addressRegion\":\"WP\","
+                + "\"postOfficeBoxNumber\":\"\",\"postalCode\":\"10000\",\"streetAddress\":\"Test\"},"
+                + "\"email\":\"test@test.com\",\"phone\":\"+94\",\"onBehalf\":false,\"piiControllerUrl\":\"http://test.com\"}");
+        receiptInput.setServices(Collections.emptyList());
+        new ReceiptDAOImpl().addReceiptWithAuthorizations(receiptInput, Collections.emptyList());
+        return consentId;
+    }
+
     private List<AddReceiptResponse> addReceipt(String... principleIDs) throws ConsentManagementException {
 
         PIICategory piiCategory = addPIICategory("PII1");

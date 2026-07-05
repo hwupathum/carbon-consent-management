@@ -875,6 +875,13 @@ public class PrivilegedConsentManagerImpl implements PrivilegedConsentManager {
         return consentManager.getReceiptWithExtendedSchema(receiptId);
     }
 
+    @Override
+    public Receipt getReceiptWithExtendedSchema(String receiptId, String piiPrincipalId)
+            throws ConsentManagementException {
+
+        return consentManager.getReceiptWithExtendedSchema(receiptId, piiPrincipalId);
+    }
+
     public List<ReceiptListResponse> searchReceipts(int limit, int offset, String piiPrincipalId, String spTenantDomain,
                                                     String service, String state) throws ConsentManagementException {
 
@@ -1354,6 +1361,13 @@ public class PrivilegedConsentManagerImpl implements PrivilegedConsentManager {
             throws ConsentManagementException {
 
         return consentManager.getConsentAuthorizations(consentId);
+    }
+
+    @Override
+    public List<ConsentAuthorization> getConsentAuthorizations(String consentId, String userId)
+            throws ConsentManagementException {
+
+        return consentManager.getConsentAuthorizations(consentId, userId);
     }
 
     @Override

@@ -492,6 +492,21 @@ public interface ConsentManager {
     }
 
     /**
+     * Get all authorization records for a consent (V2 API), after validating that the given user is either the
+     * subject of the receipt or a delegated authorizer on it. Falls back to
+     * {@link #getConsentAuthorizations(String)} (no ownership/authorizer check) for implementations that do not
+     * override.
+     *
+     * @param consentId Consent receipt ID.
+     * @param userId    ID of the user expected to be the subject or an authorizer on the receipt.
+     */
+    default List<ConsentAuthorization> getConsentAuthorizations(String consentId, String userId)
+            throws ConsentManagementException {
+
+        return getConsentAuthorizations(consentId);
+    }
+
+    /**
      * Update an existing consent receipt's expiry time, properties, and/or authorizations.
      * Null fields in {@link ReceiptUpdateInput} are left unchanged.
      *
@@ -611,5 +626,19 @@ public interface ConsentManager {
     default Receipt getReceiptWithExtendedSchema(String receiptId) throws ConsentManagementException {
 
         return null;
+    }
+
+    /**
+     * Retrieve a receipt using extended schema after validating that it belongs to the given PII principal.
+     * Falls back to {@link #getReceiptWithExtendedSchema(String)} (no ownership check) for implementations
+     * that do not override.
+     *
+     * @param receiptId      Consent receipt ID.
+     * @param piiPrincipalId PII principal ID expected to own the receipt.
+     */
+    default Receipt getReceiptWithExtendedSchema(String receiptId, String piiPrincipalId)
+            throws ConsentManagementException {
+
+        return getReceiptWithExtendedSchema(receiptId);
     }
 }

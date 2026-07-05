@@ -142,6 +142,7 @@ import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMe
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_TENANT_ID_REQUIRED;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_TERMINATION_IS_REQUIRED;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_THIRD_PARTY_DISCLOSURE_IS_REQUIRED;
+import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.ErrorMessages.ERROR_CODE_USER_NOT_AUTHORIZED;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PIIControllerElements.ADDRESS;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PIIControllerElements.ADDRESS_COUNTRY;
 import static org.wso2.carbon.consent.mgt.core.constant.ConsentConstants.PIIControllerElements.ADDRESS_LOCALITY;
@@ -808,6 +809,18 @@ public class ConsentManagerImpl implements ConsentManager {
         return receipt;
     }
 
+    @Override
+    public Receipt getReceiptWithExtendedSchema(String receiptId, String piiPrincipalId)
+            throws ConsentManagementException {
+
+        Receipt receipt = getReceiptWithExtendedSchema(receiptId);
+
+        if (!isSameUser(piiPrincipalId, receipt.getPiiPrincipalId())) {
+            throw handleClientException(ERROR_CODE_USER_NOT_AUTHORIZED, piiPrincipalId);
+        }
+        return receipt;
+    }
+
     /**
      * This API is used to search receipts.
      *
@@ -1291,6 +1304,35 @@ public class ConsentManagerImpl implements ConsentManager {
             throws ConsentManagementException {
 
         return getReceiptsDAO(receiptDAOs).getConsentAuthorizations(consentId);
+    }
+
+    /**
+     * Retrieves all authorization records for a consent receipt, after validating that the given user is either
+     * the subject of the receipt or a delegated authorizer on it.
+     *
+     * @param consentId Consent receipt ID.
+     * @param userId    ID of the user expected to be the subject or an authorizer on the receipt.
+     * @return List of authorization records for the consent.
+     * @throws ConsentManagementException if the user is neither the subject nor a delegated authorizer.
+     */
+    @Override
+    public List<ConsentAuthorization> getConsentAuthorizations(String consentId, String userId)
+            throws ConsentManagementException {
+
+        Receipt receipt = getReceiptWithExtendedSchema(consentId);
+        List<ConsentAuthorization> authorizations = getConsentAuthorizations(consentId);
+
+        if (isSameUser(userId, receipt.getPiiPrincipalId())) {
+            return authorizations;
+        }
+        if (authorizations != null) {
+            for (ConsentAuthorization authorization : authorizations) {
+                if (isSameUser(userId, authorization.getUserId())) {
+                    return authorizations;
+                }
+            }
+        }
+        throw handleClientException(ERROR_CODE_USER_NOT_AUTHORIZED, userId);
     }
 
     @Override
@@ -2000,6 +2042,22 @@ public class ConsentManagerImpl implements ConsentManager {
         } else {
             return null;
         }
+    }
+
+    /**
+     * Checks whether the given user ID refers to the same user as the other username, honouring the
+     * case-sensitivity configuration of the userstore.
+     *
+     * @param userId      User ID to check.
+     * @param otherUserId Other username to compare against.
+     * @return true if both refer to the same user.
+     * @throws ConsentManagementException if the userstore case-sensitivity cannot be resolved.
+     */
+    private boolean isSameUser(String userId, String otherUserId) throws ConsentManagementException {
+
+        return isUserNameCaseSensitive(userId)
+                ? StringUtils.equals(userId, otherUserId)
+                : StringUtils.equalsIgnoreCase(userId, otherUserId);
     }
 
     /**

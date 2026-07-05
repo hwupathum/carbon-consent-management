@@ -304,6 +304,109 @@ public class ConsentManagerImplTest {
         }
     }
 
+    @Test
+    public void testGetReceiptWithExtendedSchema_owner_succeeds() throws Exception {
+
+        setupUserStoreManagerMock(false);
+        consentManager = new ConsentManagerImpl(configurationHolder);
+        String consentId = createConsentWithoutAuthorizations("subject1");
+
+        Receipt receipt = consentManager.getReceiptWithExtendedSchema(consentId, "subject1");
+
+        Assert.assertEquals(receipt.getConsentReceiptId(), consentId);
+    }
+
+    @Test
+    public void testGetReceiptWithExtendedSchema_ownerDifferentCase_caseInsensitiveUserstore_succeeds()
+            throws Exception {
+
+        setupUserStoreManagerMock(false);
+        consentManager = new ConsentManagerImpl(configurationHolder);
+        String consentId = createConsentWithoutAuthorizations("subject1");
+
+        Receipt receipt = consentManager.getReceiptWithExtendedSchema(consentId, "SUBJECT1");
+
+        Assert.assertEquals(receipt.getConsentReceiptId(), consentId);
+    }
+
+    @Test(expectedExceptions = ConsentManagementClientException.class)
+    public void testGetReceiptWithExtendedSchema_ownerDifferentCase_caseSensitiveUserstore_throws()
+            throws Exception {
+
+        setupUserStoreManagerMock(true);
+        consentManager = new ConsentManagerImpl(configurationHolder);
+        String consentId = createConsentWithoutAuthorizations("subject1");
+
+        consentManager.getReceiptWithExtendedSchema(consentId, "SUBJECT1");
+    }
+
+    @Test(expectedExceptions = ConsentManagementClientException.class)
+    public void testGetReceiptWithExtendedSchema_differentUser_throws() throws Exception {
+
+        setupUserStoreManagerMock(false);
+        consentManager = new ConsentManagerImpl(configurationHolder);
+        String consentId = createConsentWithoutAuthorizations("subject1");
+
+        consentManager.getReceiptWithExtendedSchema(consentId, "someoneElse");
+    }
+
+    @Test
+    public void testGetConsentAuthorizations_owner_succeeds() throws Exception {
+
+        setupUserStoreManagerMock(false);
+        consentManager = new ConsentManagerImpl(configurationHolder);
+        String consentId = createConsentWithAuthorizations("subject1", "approver1");
+
+        List<ConsentAuthorization> authorizations = consentManager.getConsentAuthorizations(consentId, "subject1");
+
+        Assert.assertEquals(authorizations.size(), 1);
+    }
+
+    @Test
+    public void testGetConsentAuthorizations_delegatedAuthorizer_succeeds() throws Exception {
+
+        setupUserStoreManagerMock(false);
+        consentManager = new ConsentManagerImpl(configurationHolder);
+        String consentId = createConsentWithAuthorizations("subject1", "approver1");
+
+        List<ConsentAuthorization> authorizations = consentManager.getConsentAuthorizations(consentId, "approver1");
+
+        Assert.assertEquals(authorizations.size(), 1);
+    }
+
+    @Test
+    public void testGetConsentAuthorizations_ownerDifferentCase_caseInsensitiveUserstore_succeeds()
+            throws Exception {
+
+        setupUserStoreManagerMock(false);
+        consentManager = new ConsentManagerImpl(configurationHolder);
+        String consentId = createConsentWithAuthorizations("subject1", "approver1");
+
+        List<ConsentAuthorization> authorizations = consentManager.getConsentAuthorizations(consentId, "SUBJECT1");
+
+        Assert.assertEquals(authorizations.size(), 1);
+    }
+
+    @Test(expectedExceptions = ConsentManagementClientException.class)
+    public void testGetConsentAuthorizations_ownerDifferentCase_caseSensitiveUserstore_throws() throws Exception {
+
+        setupUserStoreManagerMock(true);
+        consentManager = new ConsentManagerImpl(configurationHolder);
+        String consentId = createConsentWithAuthorizations("subject1", "approver1");
+
+        consentManager.getConsentAuthorizations(consentId, "SUBJECT1");
+    }
+
+    @Test(expectedExceptions = ConsentManagementClientException.class)
+    public void testGetConsentAuthorizations_unauthorizedUser_throws() throws Exception {
+
+        setupUserStoreManagerMock(false);
+        consentManager = new ConsentManagerImpl(configurationHolder);
+        String consentId = createConsentWithAuthorizations("subject1", "approver1");
+
+        consentManager.getConsentAuthorizations(consentId, "stranger");
+    }
+
     private void setupUserStoreManagerMock(boolean isUserNameCaseSensitive) throws Exception {
 
         RealmService realmService = configurationHolder.getRealmService();

@@ -261,6 +261,30 @@ public class InterceptingConsentManager extends PrivilegedConsentManagerImpl {
     }
 
     /**
+     * Get a consent receipt (V2 extended schema) after validating it belongs to the accessing tenant and to the
+     * given PII principal.
+     *
+     * @param receiptId      Consent receipt ID.
+     * @param piiPrincipalId PII principal ID expected to own the receipt.
+     * @return Receipt if it belongs to the accessing tenant and the given PII principal.
+     * @throws ConsentManagementException if the receipt belongs to a different tenant or PII principal.
+     */
+    @Override
+    public Receipt getReceiptWithExtendedSchema(String receiptId, String piiPrincipalId)
+            throws ConsentManagementException {
+
+        Receipt receipt = super.getReceiptWithExtendedSchema(receiptId, piiPrincipalId);
+
+        if (isCrossTenantOperation(ConsentUtils.getTenantDomainFromCarbonContext(), receipt.getTenantDomain())) {
+            String message = String.format(ERROR_CODE_RECEIPT_ID_INVALID.getMessage(), receiptId) + " in tenant: " +
+                    ConsentUtils.getTenantDomainFromCarbonContext();
+            throw new ConsentManagementClientException(message, ERROR_CODE_RECEIPT_ID_INVALID.getCode());
+        }
+
+        return receipt;
+    }
+
+    /**
      * Delete Purpose (UUID) after validating the tenant domain of the Purpose.
      *
      * @param uuid Purpose UUID.
